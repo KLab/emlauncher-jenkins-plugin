@@ -219,18 +219,18 @@ public class TestflightRecorder extends Recorder
 
     private TestflightUploader.UploadRequest createUploadRequest(File file, File dsymFile, EnvVars vars) {
         TestflightUploader.UploadRequest ur = new TestflightUploader.UploadRequest();
-        ur.apiToken = apiToken;
+        ur.apiToken = vars.expand(apiToken);
         ur.buildNotes = vars.expand(buildNotes);
         ur.dsymFile = dsymFile;
         ur.file = file;
-        ur.lists = lists;
+        ur.lists =  vars.expand(lists);
         ur.notifyTeam = notifyTeam;
         ur.proxyHost = proxyHost;
         ur.proxyPass = proxyPass;
         ur.proxyPort = proxyPort;
         ur.proxyUser = proxyUser;
         ur.replace = replace;
-        ur.teamToken = teamToken;
+        ur.teamToken = vars.expand(teamToken);
         return ur;
     }
 
