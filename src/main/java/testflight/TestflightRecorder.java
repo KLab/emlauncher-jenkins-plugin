@@ -2,7 +2,6 @@ package testflight;
 
 import hudson.EnvVars;
 import hudson.Extension;
-import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.*;
 import hudson.model.AbstractBuild;
@@ -10,12 +9,10 @@ import hudson.tasks.*;
 import hudson.util.RunList;
 import org.apache.commons.collections.Predicate;
 import org.kohsuke.stapler.DataBoundConstructor;
-import java.io.*;
+
 import java.util.*;
 import net.sf.json.JSONObject;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.StaplerRequest;
 
 public class TestflightRecorder extends Recorder
@@ -120,23 +117,17 @@ public class TestflightRecorder extends Recorder
     }
 
     @Override
-    public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener)
+    public boolean perform(AbstractBuild build, Launcher launcher, final BuildListener listener)
     {
         if (build.getResult().isWorseOrEqualTo(Result.FAILURE))
             return false;
 
         listener.getLogger().println("Uploading to testflight");
 
-        File tempDir = null;
         try
         {
             EnvVars vars = build.getEnvironment(listener);
 
-            // Copy remote file to local file system.
-            tempDir = File.createTempFile("jtf", null);
-            tempDir.delete();
-            tempDir.mkdirs();
-            
             boolean pathSpecified = filePath != null && !filePath.trim().isEmpty();
             String expandPath;
             if(!pathSpecified)
@@ -144,20 +135,18 @@ public class TestflightRecorder extends Recorder
             else
             	expandPath = filePath;
             
-            File file = getFileLocally(build.getWorkspace(), vars.expand(expandPath), tempDir, pathSpecified);
-            listener.getLogger().println(file);
-            
-            File dsymFile = null;
-            if (!StringUtils.isEmpty(dsymPath)) {
-                dsymFile = getFileLocally(build.getWorkspace(), vars.expand(dsymPath), tempDir, true);
-            }
+			String expandedPath = vars.expand(expandPath);
+			String expandedDsymPath = vars.expand(dsymPath);
 
-            TestflightUploader uploader = new TestflightUploader();
-            TestflightUploader.UploadRequest ur = createUploadRequest(file, dsymFile, vars);
+			TestflightUploader.UploadRequest ur = createPartialUploadRequest(vars);
+
+			TestflightRemoteRecorder remoteRecorder = new TestflightRemoteRecorder(expandedPath, expandedDsymPath, pathSpecified, ur, listener);
+
+			Object result = launcher.getChannel().call(remoteRecorder);
 
             final Map parsedMap;
             try {
-                parsedMap = uploader.upload(ur);
+				parsedMap = (Map) result;
             } catch (UploadException ue) {
                 listener.getLogger().println("Incorrect response code: " + ue.getStatusCode());
                 listener.getLogger().println(ue.getResponseBody());
@@ -189,40 +178,20 @@ public class TestflightRecorder extends Recorder
                 envData.add("TESTFLIGHT_CONFIG_URL", configUrl);
             }
         }
-        catch (Exception e)
+        catch (Throwable e)
         {
             listener.getLogger().println(e);
             e.printStackTrace(listener.getLogger());
             return false;
         }
-        finally
-        {
-            try
-            {
-                FileUtils.deleteDirectory(tempDir);
-            }
-            catch (IOException e)
-            {
-                try
-                {
-                    FileUtils.forceDeleteOnExit(tempDir);
-                }
-                catch (IOException e1)
-                {
-                    listener.getLogger().println(e1);
-                }
-            }
-        }
 
         return true;
     }
 
-    private TestflightUploader.UploadRequest createUploadRequest(File file, File dsymFile, EnvVars vars) {
+    private TestflightUploader.UploadRequest createPartialUploadRequest(EnvVars vars) {
         TestflightUploader.UploadRequest ur = new TestflightUploader.UploadRequest();
         ur.apiToken = vars.expand(apiToken);
         ur.buildNotes = vars.expand(buildNotes);
-        ur.dsymFile = dsymFile;
-        ur.file = file;
         ur.lists =  vars.expand(lists);
         ur.notifyTeam = notifyTeam;
         ur.proxyHost = proxyHost;
@@ -234,43 +203,7 @@ public class TestflightRecorder extends Recorder
         return ur;
     }
 
-    private File getFileLocally(FilePath workingDir, String strFile, File tempDir, boolean pathSpecified) throws IOException, InterruptedException
-    {
-    	if(!pathSpecified) {
-    		File workspaceDir = new File(strFile);
-    		List<File> ipas = new LinkedList<File>();
-    		findIpas(workspaceDir, ipas);
-    		if(ipas.isEmpty())
-    			return workspaceDir;
-    		return ipas.get(0);
-    	} else {
-			if (workingDir.isRemote())
-			{
-				FilePath remoteFile = new FilePath(workingDir, strFile);
-				File file = new File(tempDir, remoteFile.getName());
-				file.createNewFile();
-				FileOutputStream fos = new FileOutputStream(file);
-				remoteFile.copyTo(fos);
-				fos.close();
-				return file;
-			}
-			else
-			{
-				return new File(strFile);
-			}
-        }
-    }
-    
-    private void findIpas(File root, List<File> ipas) {
-		for(File file : root.listFiles()) {
-			if(file.isDirectory())
-				findIpas(file, ipas);
-			else if(file.getName().endsWith(".ipa"))
-				ipas.add(file);
-		}
-    }
-
-    @Override
+	@Override
     public Collection<? extends Action> getProjectActions(AbstractProject<?, ?> project)
     {
         ArrayList<TestflightBuildAction> actions = new ArrayList<TestflightBuildAction>();
