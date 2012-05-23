@@ -23,7 +23,7 @@ import java.util.Scanner;
  */
 public class TestflightUploader implements Serializable {
     static class UploadRequest implements Serializable
-	{
+    {
         String apiToken;
         String teamToken;
         Boolean notifyTeam;

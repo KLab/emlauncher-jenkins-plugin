@@ -135,18 +135,18 @@ public class TestflightRecorder extends Recorder
             else
             	expandPath = filePath;
             
-			String expandedPath = vars.expand(expandPath);
-			String expandedDsymPath = vars.expand(dsymPath);
+            String expandedPath = vars.expand(expandPath);
+            String expandedDsymPath = vars.expand(dsymPath);
 
-			TestflightUploader.UploadRequest ur = createPartialUploadRequest(vars);
+            TestflightUploader.UploadRequest ur = createPartialUploadRequest(vars);
 
-			TestflightRemoteRecorder remoteRecorder = new TestflightRemoteRecorder(expandedPath, expandedDsymPath, pathSpecified, ur, listener);
+            TestflightRemoteRecorder remoteRecorder = new TestflightRemoteRecorder(expandedPath, expandedDsymPath, pathSpecified, ur, listener);
 
-			Object result = launcher.getChannel().call(remoteRecorder);
+            Object result = launcher.getChannel().call(remoteRecorder);
 
             final Map parsedMap;
             try {
-				parsedMap = (Map) result;
+                parsedMap = (Map) result;
             } catch (UploadException ue) {
                 listener.getLogger().println("Incorrect response code: " + ue.getStatusCode());
                 listener.getLogger().println(ue.getResponseBody());
@@ -203,7 +203,7 @@ public class TestflightRecorder extends Recorder
         return ur;
     }
 
-	@Override
+    @Override
     public Collection<? extends Action> getProjectActions(AbstractProject<?, ?> project)
     {
         ArrayList<TestflightBuildAction> actions = new ArrayList<TestflightBuildAction>();
