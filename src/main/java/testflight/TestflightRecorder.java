@@ -135,12 +135,9 @@ public class TestflightRecorder extends Recorder
             else
             	expandPath = filePath;
             
-            String expandedPath = vars.expand(expandPath);
-            String expandedDsymPath = vars.expand(dsymPath);
+            TestflightUploader.UploadRequest ur = createPartialUploadRequest(vars, expandPath);
 
-            TestflightUploader.UploadRequest ur = createPartialUploadRequest(vars);
-
-            TestflightRemoteRecorder remoteRecorder = new TestflightRemoteRecorder(expandedPath, expandedDsymPath, pathSpecified, ur, listener);
+            TestflightRemoteRecorder remoteRecorder = new TestflightRemoteRecorder(pathSpecified, ur, listener);
 
             Object result = launcher.getChannel().call(remoteRecorder);
 
@@ -188,8 +185,10 @@ public class TestflightRecorder extends Recorder
         return true;
     }
 
-    private TestflightUploader.UploadRequest createPartialUploadRequest(EnvVars vars) {
+    private TestflightUploader.UploadRequest createPartialUploadRequest(EnvVars vars, String expandPath) {
         TestflightUploader.UploadRequest ur = new TestflightUploader.UploadRequest();
+        ur.filePath = vars.expand(expandPath);
+        ur.dsymPath = vars.expand(dsymPath);
         ur.apiToken = vars.expand(apiToken);
         ur.buildNotes = vars.expand(buildNotes);
         ur.lists =  vars.expand(lists);

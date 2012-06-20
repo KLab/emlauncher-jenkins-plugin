@@ -24,6 +24,8 @@ import java.util.Scanner;
 public class TestflightUploader implements Serializable {
     static class UploadRequest implements Serializable
     {
+        String filePath;
+        String dsymPath;
         String apiToken;
         String teamToken;
         Boolean notifyTeam;

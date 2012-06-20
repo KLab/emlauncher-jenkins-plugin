@@ -13,40 +13,40 @@ import java.util.List;
  * Code for sending a build to TestFlight which can run on a master or slave.
  */
 public class TestflightRemoteRecorder implements Callable<Object, Throwable>, Serializable {
-    final private String filePath;
-    final private String dsymPath;
     final private boolean pathSpecified;
     final private TestflightUploader.UploadRequest uploadRequest;
     final private BuildListener listener;
 
-    public TestflightRemoteRecorder(String filePath, String dsymPath, boolean pathSpecified, TestflightUploader.UploadRequest uploadRequest, BuildListener listener) {
-        this.filePath = filePath;
-        this.dsymPath = dsymPath;
+    public TestflightRemoteRecorder(boolean pathSpecified, TestflightUploader.UploadRequest uploadRequest, BuildListener listener) {
         this.pathSpecified = pathSpecified;
         this.uploadRequest = uploadRequest;
         this.listener = listener;
     }
 
     public Object call() throws Throwable {
-        if (!StringUtils.isEmpty(dsymPath))
-            uploadRequest.dsymFile = new File(dsymPath);
+        if (!StringUtils.isEmpty(uploadRequest.dsymPath))
+            uploadRequest.dsymFile = new File(uploadRequest.dsymPath);
 
-        if (pathSpecified) {
-            uploadRequest.file = new File(filePath);
-        } else {
-            File workspaceDir = new File(filePath);
-            List<File> ipas = new LinkedList<File>();
-            TestflightRemoteRecorder.findIpas(workspaceDir, ipas);
-            if (ipas.isEmpty())
-                uploadRequest.file = workspaceDir;
-            else
-                uploadRequest.file = ipas.get(0);
-        }
+        uploadRequest.file = identifyIpa();
 
         listener.getLogger().println(uploadRequest.file);
 
         TestflightUploader uploader = new TestflightUploader();
         return uploader.upload(uploadRequest);
+    }
+
+    private File identifyIpa() {
+        if (pathSpecified) {
+            return new File(uploadRequest.filePath);
+        } else {
+            File workspaceDir = new File(uploadRequest.filePath);
+            List<File> ipas = new LinkedList<File>();
+            TestflightRemoteRecorder.findIpas(workspaceDir, ipas);
+            if (ipas.isEmpty())
+                return workspaceDir;
+            else
+                return ipas.get(0);
+        }
     }
 
     public static void findIpas(File root, List<File> ipas) {
