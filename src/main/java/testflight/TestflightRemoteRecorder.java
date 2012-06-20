@@ -40,21 +40,24 @@ public class TestflightRemoteRecorder implements Callable<Object, Throwable>, Se
             return new File(uploadRequest.filePath);
         } else {
             File workspaceDir = new File(uploadRequest.filePath);
-            List<File> ipas = new LinkedList<File>();
-            TestflightRemoteRecorder.findIpas(workspaceDir, ipas);
-            if (ipas.isEmpty())
-                return workspaceDir;
-            else
-                return ipas.get(0);
+            File possibleIpa = TestflightRemoteRecorder.findIpa(workspaceDir);
+            return possibleIpa != null ? possibleIpa : workspaceDir;
         }
     }
 
-    public static void findIpas(File root, List<File> ipas) {
+    public static File findIpa(File root) {
         for (File file : root.listFiles()) {
             if (file.isDirectory())
-                findIpas(file, ipas);
+            {
+                File ipaResult = findIpa(file);
+                if(ipaResult != null)
+                    return ipaResult;
+            }
             else if (file.getName().endsWith(".ipa"))
-                ipas.add(file);
+            {
+                return file;
+            }
         }
+        return null;
     }
 }
