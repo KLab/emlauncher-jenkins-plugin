@@ -139,10 +139,10 @@ public class TestflightRecorder extends Recorder
 
             TestflightRemoteRecorder remoteRecorder = new TestflightRemoteRecorder(pathSpecified, ur, listener);
 
-            Object result = launcher.getChannel().call(remoteRecorder);
-
             final Map parsedMap;
+
             try {
+                Object result = launcher.getChannel().call(remoteRecorder);
                 parsedMap = (Map) result;
             } catch (UploadException ue) {
                 listener.getLogger().println("Incorrect response code: " + ue.getStatusCode());
