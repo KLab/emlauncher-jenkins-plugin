@@ -10,10 +10,10 @@
     When submitted, it will be passed to the corresponding constructor parameter.
   -->
   <f:entry title="API Token" field="apiToken">
-    <f:textbox />
+    <f:password />
   </f:entry>
   <f:entry title="Team Token" field="teamToken">
-    <f:textbox />
+    <f:password />
   </f:entry>
   <f:entry title="IPA File" field="filePath">
     <f:textbox />

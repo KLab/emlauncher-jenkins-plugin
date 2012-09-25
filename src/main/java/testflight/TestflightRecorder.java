@@ -7,6 +7,7 @@ import hudson.model.*;
 import hudson.model.AbstractBuild;
 import hudson.tasks.*;
 import hudson.util.RunList;
+import hudson.util.Secret;
 import org.apache.commons.collections.Predicate;
 import org.kohsuke.stapler.DataBoundConstructor;
 
@@ -17,14 +18,14 @@ import org.kohsuke.stapler.StaplerRequest;
 
 public class TestflightRecorder extends Recorder
 {
-    private String apiToken;
-    public String getApiToken()
+    private Secret apiToken;
+    public Secret getApiToken()
     {
         return this.apiToken;
     }
             
-    private String teamToken;
-    public String getTeamToken()
+    private Secret teamToken;
+    public Secret getTeamToken()
     {
         return this.teamToken;
     }
@@ -90,7 +91,7 @@ public class TestflightRecorder extends Recorder
     }
 
     @DataBoundConstructor
-    public TestflightRecorder(String apiToken, String teamToken, Boolean notifyTeam, String buildNotes, String filePath, String dsymPath, String lists, Boolean replace, String proxyHost, String proxyUser, String proxyPass, int proxyPort)
+    public TestflightRecorder(Secret apiToken, Secret teamToken, Boolean notifyTeam, String buildNotes, String filePath, String dsymPath, String lists, Boolean replace, String proxyHost, String proxyUser, String proxyPass, int proxyPort)
     {
         this.teamToken = teamToken;
         this.apiToken = apiToken;
@@ -189,7 +190,7 @@ public class TestflightRecorder extends Recorder
         TestflightUploader.UploadRequest ur = new TestflightUploader.UploadRequest();
         ur.filePath = vars.expand(expandPath);
         ur.dsymPath = vars.expand(dsymPath);
-        ur.apiToken = vars.expand(apiToken);
+        ur.apiToken = vars.expand(Secret.toString(apiToken));
         ur.buildNotes = vars.expand(buildNotes);
         ur.lists =  vars.expand(lists);
         ur.notifyTeam = notifyTeam;
@@ -198,7 +199,7 @@ public class TestflightRecorder extends Recorder
         ur.proxyPort = proxyPort;
         ur.proxyUser = proxyUser;
         ur.replace = replace;
-        ur.teamToken = vars.expand(teamToken);
+        ur.teamToken = vars.expand(Secret.toString(teamToken));
         return ur;
     }
 
