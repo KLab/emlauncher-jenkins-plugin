@@ -132,7 +132,7 @@ public class TestflightRecorder extends Recorder
         if (build.getResult().isWorseOrEqualTo(Result.FAILURE))
             return false;
 
-        listener.getLogger().println("Uploading to testflight");
+        listener.getLogger().println(Messages.TestflightRecorder_InfoUploading());
 
         try
         {
@@ -155,26 +155,26 @@ public class TestflightRecorder extends Recorder
                 Object result = launcher.getChannel().call(remoteRecorder);
                 parsedMap = (Map) result;
             } catch (UploadException ue) {
-                listener.getLogger().println("Incorrect response code: " + ue.getStatusCode());
+                listener.getLogger().println(Messages.TestflightRecorder_IncorrectResponseCode(ue.getStatusCode()));
                 listener.getLogger().println(ue.getResponseBody());
                 return false;
             }
 
             TestflightBuildAction installAction = new TestflightBuildAction();
             String installUrl = (String)parsedMap.get("install_url");
-            installAction.displayName = "Testflight Install Link";
+            installAction.displayName = Messages.TestflightRecorder_InstallLinkText();
             installAction.iconFileName = "package.gif";
             installAction.urlName = installUrl;
             build.addAction(installAction);
-            listener.getLogger().println("Testflight Install Link: " + installUrl);
+            listener.getLogger().println(Messages.TestflightRecorder_InfoInstallLink(installUrl));
 
             TestflightBuildAction configureAction = new TestflightBuildAction();
             String configUrl = (String)parsedMap.get("config_url");
-            configureAction.displayName = "Testflight Configuration Link";
+            configureAction.displayName = Messages.TestflightRecorder_ConfigurationLinkText();
             configureAction.iconFileName = "gear2.gif";
             configureAction.urlName = configUrl;
             build.addAction(configureAction);
-            listener.getLogger().println("Testflight Config Link: " + configUrl);
+            listener.getLogger().println(Messages.TestflightRecorder_InfoConfigurationLink(configUrl));
 
             build.addAction(new EnvAction());
 
@@ -222,7 +222,7 @@ public class TestflightRecorder extends Recorder
             stringBuilder.append(buildNotes);
             
             // Then append the changelog
-            stringBuilder.append("\n\nChanges:\n");
+            stringBuilder.append("\n\n").append(Messages.TestflightRecorder_Changelog()).append("\n");
             
             int entryNumber = 1;
             
@@ -295,7 +295,7 @@ public class TestflightRecorder extends Recorder
          * This human readable name is used in the configuration screen.
          */
         public String getDisplayName() {
-            return "Upload to Testflight";
+            return Messages.TestflightRecorder_UploadLinkText();
         }
     }
 
