@@ -214,7 +214,7 @@ public class TestflightRecorder extends Recorder
 
     // Append the changelog if we should and can
     private String createBuildNotes(String buildNotes, final ChangeLogSet<?> changeSet) {
-        if (appendChangelog && !changeSet.isEmptySet()) 
+        if (appendChangelog) 
         {
             StringBuilder stringBuilder = new StringBuilder();
             
@@ -222,7 +222,9 @@ public class TestflightRecorder extends Recorder
             stringBuilder.append(buildNotes);
             
             // Then append the changelog
-            stringBuilder.append("\n\n").append(Messages.TestflightRecorder_Changelog()).append("\n");
+            stringBuilder.append("\n\n")
+                .append(changeSet.isEmptySet() ? Messages.TestflightRecorder_EmptyChangeSet() : Messages.TestflightRecorder_Changelog())
+                .append("\n");
             
             int entryNumber = 1;
             
