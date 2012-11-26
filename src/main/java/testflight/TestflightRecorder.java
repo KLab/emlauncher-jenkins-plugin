@@ -200,17 +200,26 @@ public class TestflightRecorder extends Recorder
         ur.filePath = vars.expand(expandPath);
         ur.dsymPath = vars.expand(dsymPath);
         ur.apiToken = vars.expand(Secret.toString(apiToken));
-        ur.buildNotes = vars.expand(buildNotes);
-        
-        // Append the changelog if we should and can
-        ChangeLogSet<?> changeSet = build.getChangeSet();
-        
+        ur.buildNotes = createBuildNotes(vars.expand(buildNotes), build.getChangeSet());
+        ur.lists =  vars.expand(lists);
+        ur.notifyTeam = notifyTeam;
+        ur.proxyHost = proxyHost;
+        ur.proxyPass = proxyPass;
+        ur.proxyPort = proxyPort;
+        ur.proxyUser = proxyUser;
+        ur.replace = replace;
+        ur.teamToken = vars.expand(Secret.toString(teamToken));
+        return ur;
+    }
+
+    // Append the changelog if we should and can
+    private String createBuildNotes(String buildNotes, final ChangeLogSet<?> changeSet) {
         if (appendChangelog && !changeSet.isEmptySet()) 
         {
             StringBuilder stringBuilder = new StringBuilder();
             
             // Show the build notes first
-            stringBuilder.append(ur.buildNotes);
+            stringBuilder.append(buildNotes);
             
             // Then append the changelog
             stringBuilder.append("\n\nChanges:\n");
@@ -224,20 +233,9 @@ public class TestflightRecorder extends Recorder
                 
                 entryNumber++;
             }
-            
-            // Update the upload request's build notes
-            ur.buildNotes = stringBuilder.toString();
+            buildNotes = stringBuilder.toString();
         }
-        
-        ur.lists =  vars.expand(lists);
-        ur.notifyTeam = notifyTeam;
-        ur.proxyHost = proxyHost;
-        ur.proxyPass = proxyPass;
-        ur.proxyPort = proxyPort;
-        ur.proxyUser = proxyUser;
-        ur.replace = replace;
-        ur.teamToken = vars.expand(Secret.toString(teamToken));
-        return ur;
+        return buildNotes;
     }
 
     @Override
