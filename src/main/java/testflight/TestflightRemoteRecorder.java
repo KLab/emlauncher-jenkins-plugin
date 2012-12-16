@@ -66,7 +66,7 @@ public class TestflightRemoteRecorder implements Callable<Object, Throwable>, Se
         } else {
             File workspaceDir = new File(uploadRequest.dsymPath);
             File possibleDsym = TestflightRemoteRecorder.findDsym(workspaceDir);
-            return possibleDsym != null ? possibleDsym : workspaceDir;
+            return possibleDsym != null ? possibleDsym : null;
         }
     }
 
