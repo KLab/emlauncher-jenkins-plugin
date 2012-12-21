@@ -8,16 +8,16 @@ import java.io.Serializable;
 
 /**
  * Code for sending a build to TestFlight which can run on a master or slave.
+ * 
+ * When the ipa file or optional dsym file are not specified, this class first tries to resolve their paths, searching them inside the workspace.
  */
 public class TestflightRemoteRecorder implements Callable<Object, Throwable>, Serializable {
-    final private boolean pathSpecified;
-    final private boolean dsymPathSpecified;
+    final private String remoteWorkspace;
     final private TestflightUploader.UploadRequest uploadRequest;
     final private BuildListener listener;
 
-    public TestflightRemoteRecorder(boolean pathSpecified, boolean dsymPathSpecified, TestflightUploader.UploadRequest uploadRequest, BuildListener listener) {
-        this.pathSpecified = pathSpecified;
-        this.dsymPathSpecified = dsymPathSpecified;
+    public TestflightRemoteRecorder(String remoteWorkspace, TestflightUploader.UploadRequest uploadRequest, BuildListener listener) {
+        this.remoteWorkspace = remoteWorkspace;
         this.uploadRequest = uploadRequest;
         this.listener = listener;
     }
@@ -26,61 +26,44 @@ public class TestflightRemoteRecorder implements Callable<Object, Throwable>, Se
         uploadRequest.file = identifyIpa();
         uploadRequest.dsymFile = identifyDsym();
 
-        listener.getLogger().println(uploadRequest.file);
+        listener.getLogger().println("IPA: " + uploadRequest.file);
+        listener.getLogger().println("DSYM: " + uploadRequest.dsymFile);
 
         TestflightUploader uploader = new TestflightUploader();
         return uploader.upload(uploadRequest);
     }
 
     private File identifyIpa() {
-        if (pathSpecified) {
-            return new File(uploadRequest.filePath);
-        } else {
-            File workspaceDir = new File(uploadRequest.filePath);
-            File possibleIpa = TestflightRemoteRecorder.findIpa(workspaceDir);
-            return possibleIpa != null ? possibleIpa : workspaceDir;
-        }
-    }
-
-    public static File findIpa(File root) {
-        for (File file : root.listFiles()) {
-            if (file.isDirectory())
-            {
-                File ipaResult = findIpa(file);
-                if(ipaResult != null)
-                    return ipaResult;
-            }
-            else if (file.getName().endsWith(".ipa"))
-            {
-                return file;
-            }
-        }
-        return null;
+        return identifyFile(uploadRequest.filePath, ".ipa");
     }
 
     private File identifyDsym() {
-        if (dsymPathSpecified) {
-            return new File(uploadRequest.dsymPath);
+        return identifyFile(uploadRequest.dsymPath, "-dSYM.zip");
+    }
+
+    private File identifyFile(String filePath, String suffix) {
+        if (filePath != null) {
+            return new File(filePath);
         } else {
-            File workspaceDir = new File(uploadRequest.dsymPath);
-            File possibleDsym = TestflightRemoteRecorder.findDsym(workspaceDir);
-            return possibleDsym != null ? possibleDsym : null;
+            return findFirstFile(new File(remoteWorkspace), suffix);
         }
     }
 
-    public static File findDsym(File root) {
+    /* Finds the first file ending with the specified suffix searching recursively inside the specified root, or null otherwise */
+    static File findFirstFile(File root, String suffix) {
         for (File file : root.listFiles()) {
             if (file.isDirectory())
             {
-                File dsymResult = findDsym(file);
-                if(dsymResult != null)
-                    return dsymResult;
+                File result = findFirstFile(file, suffix);
+                if(result != null)
+                    return result;
             }
-            else if (file.getName().endsWith("-dSYM.zip"))
+            else if (file.getName().endsWith(suffix))
             {
                 return file;
             }
         }
         return null;
     }
+
 }

@@ -11,6 +11,7 @@ import hudson.tasks.*;
 import hudson.util.RunList;
 import hudson.util.Secret;
 import org.apache.commons.collections.Predicate;
+import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.util.*;
@@ -138,23 +139,11 @@ public class TestflightRecorder extends Recorder
         {
             EnvVars vars = build.getEnvironment(listener);
 
-            boolean pathSpecified = filePath != null && !filePath.trim().isEmpty();
-            String expandPath;
-            if(!pathSpecified)
-            	expandPath = "$WORKSPACE";
-            else
-            	expandPath = filePath;
-            
-            boolean dsymPathSpecified = dsymPath != null && !dsymPath.trim().isEmpty();
-            String dsymExpandPath;
-            if (!dsymPathSpecified)
-                dsymExpandPath = "$WORKSPACE";
-            else
-                dsymExpandPath = dsymPath;
+            String workspace = vars.expand("$WORKSPACE");
 
-            TestflightUploader.UploadRequest ur = createPartialUploadRequest(vars, build, expandPath, dsymExpandPath);
+            TestflightUploader.UploadRequest ur = createPartialUploadRequest(vars, build);
 
-            TestflightRemoteRecorder remoteRecorder = new TestflightRemoteRecorder(pathSpecified, dsymPathSpecified, ur, listener);
+            TestflightRemoteRecorder remoteRecorder = new TestflightRemoteRecorder(workspace, ur, listener);
 
             final Map parsedMap;
 
@@ -202,10 +191,10 @@ public class TestflightRecorder extends Recorder
         return true;
     }
 
-    private TestflightUploader.UploadRequest createPartialUploadRequest(EnvVars vars, AbstractBuild<?, ?> build, String expandPath, String dsymExpandPath) {
+    private TestflightUploader.UploadRequest createPartialUploadRequest(EnvVars vars, AbstractBuild<?, ?> build) {
         TestflightUploader.UploadRequest ur = new TestflightUploader.UploadRequest();
-        ur.filePath = vars.expand(expandPath);
-        ur.dsymPath = vars.expand(dsymExpandPath);
+        ur.filePath = vars.expand(StringUtils.trim(filePath));
+        ur.dsymPath = vars.expand(StringUtils.trim(dsymPath));
         ur.apiToken = vars.expand(Secret.toString(apiToken));
         ur.buildNotes = createBuildNotes(vars.expand(buildNotes), build.getChangeSet());
         ur.lists =  vars.expand(lists);
