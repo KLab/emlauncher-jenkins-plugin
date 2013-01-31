@@ -30,7 +30,42 @@ public class TestflightRemoteRecorder implements Callable<Object, Throwable>, Se
         listener.getLogger().println("DSYM: " + uploadRequest.dsymFile);
 
         TestflightUploader uploader = new TestflightUploader();
-        return uploader.upload(uploadRequest);
+
+        long startTime = System.currentTimeMillis();
+        Object result = uploader.upload(uploadRequest);
+        long time = System.currentTimeMillis() - startTime;
+
+        float speed = computeSpeed(time);
+        listener.getLogger().println(Messages.TestflightRemoteRecorder_UploadSpeed(prettySpeed(speed)));
+
+        return result;
+    }
+
+    // return the speed in bits per second
+    private float computeSpeed(long uploadTimeMillis) {
+        if (uploadTimeMillis == 0) {
+            return Float.NaN;
+        }
+        long postSize = 0;
+        if (uploadRequest.file != null) {
+           postSize += uploadRequest.file.length();           
+        }
+        if (uploadRequest.dsymFile != null) {
+           postSize += uploadRequest.dsymFile.length();           
+        }
+        return (postSize*8000.0f)/uploadTimeMillis;
+    }
+
+    private static String prettySpeed(float speed) {
+        if (speed == Float.NaN) return "NaN bps";
+
+        String[] units = { "bps", "Kbps", "Mbps", "Gbps" };
+        int idx=0;
+        while (speed > 1024 && idx <= units.length - 1) {
+            speed /= 1024;
+            idx+=1;
+        }
+        return String.format("%.2f", speed) + units[idx];
     }
 
     private File identifyIpa() {
