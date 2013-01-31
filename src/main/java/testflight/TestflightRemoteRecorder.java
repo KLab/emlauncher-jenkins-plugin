@@ -42,7 +42,7 @@ public class TestflightRemoteRecorder implements Callable<Object, Throwable>, Se
     }
 
     private File identifyFile(String filePath, String suffix) {
-        if (filePath != null) {
+        if (filePath != null && !filePath.trim().isEmpty()) {
             return new File(filePath);
         } else {
             return findFirstFile(new File(remoteWorkspace), suffix);
@@ -52,6 +52,7 @@ public class TestflightRemoteRecorder implements Callable<Object, Throwable>, Se
     /* Finds the first file ending with the specified suffix searching recursively inside the specified root, or null otherwise */
     static File findFirstFile(File root, String suffix) {
         for (File file : root.listFiles()) {
+
             if (file.isDirectory())
             {
                 File result = findFirstFile(file, suffix);
