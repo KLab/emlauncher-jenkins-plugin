@@ -36,6 +36,11 @@
       <name>Joshua Weinberg</name>
       <email>joshuacweinberg@gmail.com</email>
     </developer>
+    <developer>
+      <id>lacostej</id>
+      <name>Jerome Lacoste</name>
+      <email>jerome.lacoste@gmail.com</email>
+    </developer>
   </developers>
   <pluginRepositories>
     <pluginRepository>
