@@ -227,7 +227,7 @@ public class TestflightRecorder extends Recorder
             for (Entry entry : changeSet) 
             {
                 stringBuilder.append("\n").append(entryNumber).append(". ");
-                stringBuilder.append(entry.getMsg()).append(" — ").append(entry.getAuthor());
+                stringBuilder.append(entry.getMsg()).append(" \u2014 ").append(entry.getAuthor());
                 
                 entryNumber++;
             }
