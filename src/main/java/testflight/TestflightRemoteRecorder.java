@@ -5,6 +5,15 @@ import hudson.remoting.Callable;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.filefilter.FileFilterUtils;
+import org.apache.commons.io.filefilter.TrueFileFilter;
 
 /**
  * Code for sending a build to TestFlight which can run on a master or slave.
@@ -23,20 +32,26 @@ public class TestflightRemoteRecorder implements Callable<Object, Throwable>, Se
     }
 
     public Object call() throws Throwable {
-        uploadRequest.file = identifyIpa();
-        uploadRequest.dsymFile = identifyDsym();
+    	HashMap result = new HashMap();
+    	
+    	File[] ipaFiles = findIpaFiles(uploadRequest.filePath);
+    	for(File file : ipaFiles) {
+            uploadRequest.file = file;
+            uploadRequest.dsymFile = identifyDsym(uploadRequest.dsymPath, file.getName());
+            
+            listener.getLogger().println("IPA: " + uploadRequest.file);
+            listener.getLogger().println("DSYM: " + uploadRequest.dsymFile);
 
-        listener.getLogger().println("IPA: " + uploadRequest.file);
-        listener.getLogger().println("DSYM: " + uploadRequest.dsymFile);
+            TestflightUploader uploader = new TestflightUploader();
 
-        TestflightUploader uploader = new TestflightUploader();
+            long startTime = System.currentTimeMillis();
+            result.putAll(uploader.upload(uploadRequest));
+            
+            long time = System.currentTimeMillis() - startTime;
 
-        long startTime = System.currentTimeMillis();
-        Object result = uploader.upload(uploadRequest);
-        long time = System.currentTimeMillis() - startTime;
-
-        float speed = computeSpeed(time);
-        listener.getLogger().println(Messages.TestflightRemoteRecorder_UploadSpeed(prettySpeed(speed)));
+            float speed = computeSpeed(time);
+            listener.getLogger().println(Messages.TestflightRemoteRecorder_UploadSpeed(prettySpeed(speed)));
+    	}
 
         return result;
     }
@@ -68,20 +83,33 @@ public class TestflightRemoteRecorder implements Callable<Object, Throwable>, Se
         return String.format("%.2f", speed) + units[idx];
     }
 
-    private File identifyIpa() {
-        return identifyFile(uploadRequest.filePath, ".ipa");
-    }
-
-    private File identifyDsym() {
-        return identifyFile(uploadRequest.dsymPath, "-dSYM.zip");
-    }
-
-    private File identifyFile(String filePath, String suffix) {
-        if (filePath != null && !filePath.trim().isEmpty()) {
-            return new File(filePath);
+    private File identifyDsym(String filePath, String ipaName) {
+    	File dsymFile;
+    	if (filePath != null && !filePath.trim().isEmpty()) {
+    		dsymFile = new File(filePath);
         } else {
-            return findFirstFile(new File(remoteWorkspace), suffix);
+        	String fileName = FilenameUtils.removeExtension(ipaName);
+        	Collection<?> files = FileUtils.listFiles(new File(remoteWorkspace), FileFilterUtils.nameFileFilter(fileName + "-dSYM.zip"), TrueFileFilter.INSTANCE);
+        	if (!files.isEmpty()) {
+        		dsymFile = (File)files.toArray()[0];
+        	} else {
+        		dsymFile = null;
+        	}
         }
+    	
+        return dsymFile;
+    }
+
+    private File[] findIpaFiles(String filePath) {
+    	File[] files;
+        if (filePath != null && !filePath.trim().isEmpty()) {
+        	files = new File[]{new File(filePath)};
+        } else {
+        	String[] extensions = {"ipa"};
+            boolean recursive = true;
+        	files = (File[])FileUtils.listFiles(new File(remoteWorkspace), extensions, recursive).toArray(new File[0]);
+        }
+    	return files;
     }
 
     /* Finds the first file ending with the specified suffix searching recursively inside the specified root, or null otherwise */
