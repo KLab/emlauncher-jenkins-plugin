@@ -8,7 +8,7 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Map;
+import java.util.Iterator;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -32,26 +32,27 @@ public class TestflightRemoteRecorder implements Callable<Object, Throwable>, Se
     }
 
     public Object call() throws Throwable {
-    	HashMap result = new HashMap();
-    	
-    	File[] ipaFiles = findIpaFiles(uploadRequest.filePath);
-    	for(File file : ipaFiles) {
+        HashMap result = new HashMap();
+        TestflightUploader uploader = new TestflightUploader();
+
+        Collection ipaFiles = findIpaFiles(uploadRequest.filePath);
+        Iterator itr = ipaFiles.iterator();
+        while (itr.hasNext()) {
+            File file = (File) itr.next();
             uploadRequest.file = file;
             uploadRequest.dsymFile = identifyDsym(uploadRequest.dsymPath, file.getName());
-            
+
             listener.getLogger().println("IPA: " + uploadRequest.file);
             listener.getLogger().println("DSYM: " + uploadRequest.dsymFile);
 
-            TestflightUploader uploader = new TestflightUploader();
-
             long startTime = System.currentTimeMillis();
             result.putAll(uploader.upload(uploadRequest));
-            
+
             long time = System.currentTimeMillis() - startTime;
 
             float speed = computeSpeed(time);
             listener.getLogger().println(Messages.TestflightRemoteRecorder_UploadSpeed(prettySpeed(speed)));
-    	}
+        }
 
         return result;
     }
@@ -84,32 +85,31 @@ public class TestflightRemoteRecorder implements Callable<Object, Throwable>, Se
     }
 
     private File identifyDsym(String filePath, String ipaName) {
-    	File dsymFile;
-    	if (filePath != null && !filePath.trim().isEmpty()) {
-    		dsymFile = new File(filePath);
+        File dsymFile;
+        if (filePath != null && !filePath.trim().isEmpty()) {
+            dsymFile = new File(filePath);
         } else {
-        	String fileName = FilenameUtils.removeExtension(ipaName);
-        	Collection<?> files = FileUtils.listFiles(new File(remoteWorkspace), FileFilterUtils.nameFileFilter(fileName + "-dSYM.zip"), TrueFileFilter.INSTANCE);
-        	if (!files.isEmpty()) {
-        		dsymFile = (File)files.toArray()[0];
-        	} else {
-        		dsymFile = null;
-        	}
+            String fileName = FilenameUtils.removeExtension(ipaName);
+            Collection files = FileUtils.listFiles(new File(remoteWorkspace), FileFilterUtils.nameFileFilter(fileName + "-dSYM.zip"), TrueFileFilter.INSTANCE);
+            if (!files.isEmpty()) {
+                dsymFile = (File)files.iterator().next();
+            } else {
+                dsymFile = null;
+            }
         }
-    	
         return dsymFile;
     }
 
-    private File[] findIpaFiles(String filePath) {
-    	File[] files;
+    private Collection findIpaFiles(String filePath) {
+        Collection files;
         if (filePath != null && !filePath.trim().isEmpty()) {
-        	files = new File[]{new File(filePath)};
+            files = Collections.singleton(new File(filePath));
         } else {
-        	String[] extensions = {"ipa"};
+            String[] extensions = {"ipa"};
             boolean recursive = true;
-        	files = (File[])FileUtils.listFiles(new File(remoteWorkspace), extensions, recursive).toArray(new File[0]);
+            files = FileUtils.listFiles(new File(remoteWorkspace), extensions, recursive);
         }
-    	return files;
+        return files;
     }
 
     /* Finds the first file ending with the specified suffix searching recursively inside the specified root, or null otherwise */
