@@ -35,12 +35,10 @@ public class TestflightRemoteRecorder implements Callable<Object, Throwable>, Se
         HashMap result = new HashMap();
         TestflightUploader uploader = new TestflightUploader();
 
-        Collection ipaFiles = findIpaFiles(uploadRequest.filePath);
-        Iterator itr = ipaFiles.iterator();
-        while (itr.hasNext()) {
-            File file = (File) itr.next();
-            uploadRequest.file = file;
-            uploadRequest.dsymFile = identifyDsym(uploadRequest.dsymPath, file.getName());
+        Collection<File> ipaFiles = findIpaFiles(uploadRequest.filePath);
+        for (File ipaFile : ipaFiles) {
+            uploadRequest.file = ipaFile;
+            uploadRequest.dsymFile = identifyDsym(uploadRequest.dsymPath, ipaFile.getName());
 
             listener.getLogger().println("IPA: " + uploadRequest.file);
             listener.getLogger().println("DSYM: " + uploadRequest.dsymFile);
@@ -84,15 +82,16 @@ public class TestflightRemoteRecorder implements Callable<Object, Throwable>, Se
         return String.format("%.2f", speed) + units[idx];
     }
 
+    /* if a specified filePath is specified, return it, otherwise find in the workspace the DSYM matching the specified ipa file name */
     private File identifyDsym(String filePath, String ipaName) {
         File dsymFile;
         if (filePath != null && !filePath.trim().isEmpty()) {
             dsymFile = new File(filePath);
         } else {
             String fileName = FilenameUtils.removeExtension(ipaName);
-            Collection files = FileUtils.listFiles(new File(remoteWorkspace), FileFilterUtils.nameFileFilter(fileName + "-dSYM.zip"), TrueFileFilter.INSTANCE);
+            Collection<File> files = FileUtils.listFiles(new File(remoteWorkspace), FileFilterUtils.nameFileFilter(fileName + "-dSYM.zip"), TrueFileFilter.INSTANCE);
             if (!files.isEmpty()) {
-                dsymFile = (File)files.iterator().next();
+                dsymFile = files.iterator().next();
             } else {
                 dsymFile = null;
             }
@@ -100,8 +99,9 @@ public class TestflightRemoteRecorder implements Callable<Object, Throwable>, Se
         return dsymFile;
     }
 
-    private Collection findIpaFiles(String filePath) {
-        Collection files;
+    /* if a specified filePath is specified, return it, otherwise find recursively all ipa files in the remoteworkspace */
+    private Collection<File> findIpaFiles(String filePath) {
+        Collection<File> files;
         if (filePath != null && !filePath.trim().isEmpty()) {
             files = Collections.singleton(new File(filePath));
         } else {
@@ -111,23 +111,4 @@ public class TestflightRemoteRecorder implements Callable<Object, Throwable>, Se
         }
         return files;
     }
-
-    /* Finds the first file ending with the specified suffix searching recursively inside the specified root, or null otherwise */
-    static File findFirstFile(File root, String suffix) {
-        for (File file : root.listFiles()) {
-
-            if (file.isDirectory())
-            {
-                File result = findFirstFile(file, suffix);
-                if(result != null)
-                    return result;
-            }
-            else if (file.getName().endsWith(suffix))
-            {
-                return file;
-            }
-        }
-        return null;
-    }
-
 }
