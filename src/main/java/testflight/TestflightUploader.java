@@ -42,6 +42,7 @@ public class TestflightUploader implements Serializable {
     }
 
     public Map upload(UploadRequest ur) throws IOException, org.json.simple.parser.ParseException {
+        boolean tmpIsAndroid = ur.file.getName().endsWith(".apk"); // API is agnostic but currently has android specific issues
 
         DefaultHttpClient httpClient = new DefaultHttpClient();
 
@@ -74,7 +75,8 @@ public class TestflightUploader implements Serializable {
         if (ur.lists.length() > 0)
             entity.addPart("distribution_lists", new StringBody(ur.lists));
         entity.addPart("notify", new StringBody(ur.notifyTeam ? "True" : "False"));
-        entity.addPart("replace", new StringBody(ur.replace ? "True" : "False"));
+        if (!tmpIsAndroid)
+            entity.addPart("replace", new StringBody(ur.replace ? "True" : "False"));
         httpPost.setEntity(entity);
 
         HttpResponse response = httpClient.execute(targetHost,httpPost);
