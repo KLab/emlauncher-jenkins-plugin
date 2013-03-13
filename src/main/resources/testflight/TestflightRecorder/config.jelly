@@ -15,10 +15,10 @@
   <f:entry title="Team Token" field="teamToken">
     <f:password />
   </f:entry>
-  <f:entry title="IPA File" field="filePath">
+  <f:entry title="IPA/APK File" field="filePath">
     <f:textbox />
   </f:entry>
-  <f:entry title="dSYM File" field="dsymPath">
+  <f:entry title="dSYM File (optional)" field="dsymPath">
     <f:textbox />
   </f:entry>
   <f:entry title="Build Notes" field="buildNotes">
