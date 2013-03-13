@@ -6,7 +6,16 @@ public class TestflightUploaderMain {
     /**
      * Useful for testing
      */
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
+        try {
+            upload(args);
+        } catch (Exception e) {
+            System.err.println(e);
+            e.printStackTrace(System.err);
+        }
+    }
+
+    private static void upload(String[] args) throws Exception {
         TestflightUploader uploader = new TestflightUploader();
         TestflightUploader.UploadRequest r = new TestflightUploader.UploadRequest();
         r.apiToken = args[0];
@@ -16,7 +25,7 @@ public class TestflightUploaderMain {
         r.file = file;
         r.dsymFile = null;
         r.notifyTeam = true;
-        r.replace = true;
+        r.replace = false;
         r.lists = args[4];
 
         uploader.upload(r);

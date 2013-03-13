@@ -24,4 +24,7 @@ public class UploadException extends RuntimeException {
     public HttpResponse getResponse() {
         return response;
     }
+    public String toString() {
+        return "UploadException: " + statusCode + " " + responseBody;        
+    }
 }
