@@ -17,6 +17,12 @@ public class TestflightUploaderMain {
 
     private static void upload(String[] args) throws Exception {
         TestflightUploader uploader = new TestflightUploader();
+        uploader.setLogger(new TestflightUploader.Logger() {
+            public void logDebug(String message) {
+                System.out.println(message);
+            }
+        });
+
         TestflightUploader.UploadRequest r = new TestflightUploader.UploadRequest();
         r.apiToken = args[0];
         r.teamToken = args[1];

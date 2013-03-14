@@ -13,16 +13,22 @@ import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.simple.parser.JSONParser;
+import org.apache.commons.io.IOUtils;
 
 import java.io.*;
 import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.Scanner;
+import org.apache.commons.lang.builder.ToStringBuilder;
 
 /**
  * A testflight uploader
  */
 public class TestflightUploader implements Serializable {
+    static interface Logger {
+        void logDebug(String message);
+    }
+
     static class UploadRequest implements Serializable
     {
         String filePath;
@@ -39,6 +45,33 @@ public class TestflightUploader implements Serializable {
         String proxyUser;
         String proxyPass;
         int proxyPort;
+        Boolean debug;
+
+        public String toString() {
+            return new ToStringBuilder(this)
+                .append("filePath", filePath)
+                .append("dsymPath", dsymPath)
+                .append("apiToken", "********")
+                .append("teamToken", "********")
+                .append("notifyTeam", notifyTeam)
+                .append("buildNotes", buildNotes)
+                .append("file", file)
+                .append("dsymFile", dsymFile)
+                .append("lists", lists)
+                .append("replace", replace)
+                .append("proxyHost", proxyHost)
+                .append("proxyUser", proxyUser)
+                .append("proxyPass", "********")
+                .append("proxyPort", proxyPort)
+                .append("debug", debug)
+                .toString();
+        }
+    }
+
+    private Logger logger = null;
+
+    public void setLogger(Logger logger) {
+        this.logger = logger;
     }
 
     public Map upload(UploadRequest ur) throws IOException, org.json.simple.parser.ParseException {
@@ -79,6 +112,8 @@ public class TestflightUploader implements Serializable {
             entity.addPart("replace", new StringBody(ur.replace ? "True" : "False"));
         httpPost.setEntity(entity);
 
+        logDebug("POST Request: " + ur);
+
         HttpResponse response = httpClient.execute(targetHost,httpPost);
         HttpEntity resEntity = response.getEntity();
 
@@ -91,8 +126,20 @@ public class TestflightUploader implements Serializable {
             throw new UploadException(statusCode, responseBody, response);
         }
 
+        StringWriter writer = new StringWriter();
+        IOUtils.copy(is, writer, "UTF-8");
+        String json = writer.toString();
+
+        logDebug("POST Answer: " + json);
+
         JSONParser parser = new JSONParser();
 
-        return (Map)parser.parse(new BufferedReader(new InputStreamReader(is)));
+        return (Map)parser.parse(json);
+    }
+
+    private void logDebug(String message) {
+        if (logger != null) {
+            logger.logDebug(message);
+        }
     }
 }

@@ -99,8 +99,14 @@ public class TestflightRecorder extends Recorder
         return proxyPort;
     }
 
+    private Boolean debug;
+    public Boolean getDebug()
+    {
+        return this.debug;
+    }
+
     @DataBoundConstructor
-    public TestflightRecorder(Secret apiToken, Secret teamToken, Boolean notifyTeam, String buildNotes, Boolean appendChangelog, String filePath, String dsymPath, String lists, Boolean replace, String proxyHost, String proxyUser, String proxyPass, int proxyPort)
+    public TestflightRecorder(Secret apiToken, Secret teamToken, Boolean notifyTeam, String buildNotes, Boolean appendChangelog, String filePath, String dsymPath, String lists, Boolean replace, String proxyHost, String proxyUser, String proxyPass, int proxyPort, Boolean debug)
     {
         this.teamToken = teamToken;
         this.apiToken = apiToken;
@@ -115,6 +121,7 @@ public class TestflightRecorder extends Recorder
         this.proxyUser = proxyUser;
         this.proxyPass = proxyPass;
         this.proxyPort = proxyPort;
+        this.debug = debug;
     }
 
     @Override
@@ -205,6 +212,7 @@ public class TestflightRecorder extends Recorder
         ur.proxyUser = proxyUser;
         ur.replace = replace;
         ur.teamToken = vars.expand(Secret.toString(teamToken));
+        ur.debug = debug;
         return ur;
     }
 

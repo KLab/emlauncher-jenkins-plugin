@@ -31,9 +31,18 @@ public class TestflightRemoteRecorder implements Callable<Object, Throwable>, Se
         this.listener = listener;
     }
 
+
+
     public Object call() throws Throwable {
         HashMap result = new HashMap();
         TestflightUploader uploader = new TestflightUploader();
+        if (uploadRequest.debug != null && uploadRequest.debug) {
+            uploader.setLogger(new TestflightUploader.Logger() {
+                public void logDebug(String message) {
+                    listener.getLogger().println(message);
+                }
+            });
+        }
 
         Collection<File> ipaOrApkFiles = findIpaOrApkFiles(uploadRequest.filePath);
         for (File ipaOrApkFile : ipaOrApkFiles) {
