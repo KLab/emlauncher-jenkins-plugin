@@ -8,6 +8,7 @@ import hudson.model.AbstractBuild;
 import hudson.scm.ChangeLogSet;
 import hudson.scm.ChangeLogSet.Entry;
 import hudson.tasks.*;
+import hudson.util.CopyOnWriteList;
 import hudson.util.RunList;
 import hudson.util.Secret;
 import org.apache.commons.collections.Predicate;
@@ -21,18 +22,12 @@ import org.kohsuke.stapler.StaplerRequest;
 
 public class TestflightRecorder extends Recorder
 {
-    private Secret apiToken;
-    public Secret getApiToken()
+    private String tokenPairName;
+    public String getTokenPairName()
     {
-        return this.apiToken;
+        return this.tokenPairName;
     }
-            
-    private Secret teamToken;
-    public Secret getTeamToken()
-    {
-        return this.teamToken;
-    }
-    
+
     private Boolean notifyTeam;
     public Boolean getNotifyTeam()
     {
@@ -106,10 +101,9 @@ public class TestflightRecorder extends Recorder
     }
 
     @DataBoundConstructor
-    public TestflightRecorder(Secret apiToken, Secret teamToken, Boolean notifyTeam, String buildNotes, Boolean appendChangelog, String filePath, String dsymPath, String lists, Boolean replace, String proxyHost, String proxyUser, String proxyPass, int proxyPort, Boolean debug)
+    public TestflightRecorder(String tokenPairName, Boolean notifyTeam, String buildNotes, Boolean appendChangelog, String filePath, String dsymPath, String lists, Boolean replace, String proxyHost, String proxyUser, String proxyPass, int proxyPort, Boolean debug)
     {
-        this.teamToken = teamToken;
-        this.apiToken = apiToken;
+        this.tokenPairName = tokenPairName;
         this.notifyTeam = notifyTeam;
         this.buildNotes = buildNotes;
         this.appendChangelog = appendChangelog;
@@ -200,18 +194,19 @@ public class TestflightRecorder extends Recorder
 
     private TestflightUploader.UploadRequest createPartialUploadRequest(EnvVars vars, AbstractBuild<?, ?> build) {
         TestflightUploader.UploadRequest ur = new TestflightUploader.UploadRequest();
+        TokenPair tokenPair = getTokenPair();
         ur.filePath = vars.expand(StringUtils.trim(filePath));
         ur.dsymPath = vars.expand(StringUtils.trim(dsymPath));
-        ur.apiToken = vars.expand(Secret.toString(apiToken));
+        ur.apiToken = vars.expand(Secret.toString(tokenPair.getApiToken()));
         ur.buildNotes = createBuildNotes(vars.expand(buildNotes), build.getChangeSet());
-        ur.lists =  vars.expand(lists);
+        ur.lists = vars.expand(lists);
         ur.notifyTeam = notifyTeam;
         ur.proxyHost = proxyHost;
         ur.proxyPass = proxyPass;
         ur.proxyPort = proxyPort;
         ur.proxyUser = proxyUser;
         ur.replace = replace;
-        ur.teamToken = vars.expand(Secret.toString(teamToken));
+        ur.teamToken = vars.expand(Secret.toString(tokenPair.getTeamToken()));
         ur.debug = debug;
         return ur;
     }
@@ -276,9 +271,20 @@ public class TestflightRecorder extends Recorder
         return actions;
     }
 
+    private TokenPair getTokenPair() {
+        for (TokenPair tokenPair : getDescriptor().getTokenPairs()) {
+            if(tokenPair.getTokenPairName().equals(getTokenPairName()))
+                return tokenPair;
+        }
+
+        return null;
+    }
+
     @Extension // This indicates to Jenkins that this is an implementation of an extension point.
     public static final class DescriptorImpl extends BuildStepDescriptor<Publisher>
     {
+        private final CopyOnWriteList<TokenPair> tokenPairs = new CopyOnWriteList<TokenPair>();
+
         public DescriptorImpl() {
             super(TestflightRecorder.class);
             load();
@@ -291,8 +297,7 @@ public class TestflightRecorder extends Recorder
 
         @Override
         public boolean configure(StaplerRequest req, JSONObject json) throws FormException {
-            // XXX is this now the right style?
-            req.bindJSON(this,json);
+            tokenPairs.replaceBy(req.bindParametersToList(TokenPair.class, "tokenPair."));
             save();
             return true;
         }
@@ -302,6 +307,10 @@ public class TestflightRecorder extends Recorder
          */
         public String getDisplayName() {
             return Messages.TestflightRecorder_UploadLinkText();
+        }
+
+        public Iterable<TokenPair> getTokenPairs() {
+            return tokenPairs;
         }
     }
 
