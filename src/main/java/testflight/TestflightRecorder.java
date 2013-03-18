@@ -28,6 +28,20 @@ public class TestflightRecorder extends Recorder
         return this.tokenPairName;
     }
 
+    private Secret apiToken;
+    @Deprecated
+    public Secret getApiToken()
+    {
+        return this.apiToken;
+    }
+
+    private Secret teamToken;
+    @Deprecated
+    public Secret getTeamToken()
+    {
+        return this.teamToken;
+    }
+
     private Boolean notifyTeam;
     public Boolean getNotifyTeam()
     {
@@ -101,9 +115,11 @@ public class TestflightRecorder extends Recorder
     }
 
     @DataBoundConstructor
-    public TestflightRecorder(String tokenPairName, Boolean notifyTeam, String buildNotes, Boolean appendChangelog, String filePath, String dsymPath, String lists, Boolean replace, String proxyHost, String proxyUser, String proxyPass, int proxyPort, Boolean debug)
+    public TestflightRecorder(String tokenPairName, Secret apiToken, Secret teamToken, Boolean notifyTeam, String buildNotes, Boolean appendChangelog, String filePath, String dsymPath, String lists, Boolean replace, String proxyHost, String proxyUser, String proxyPass, int proxyPort, Boolean debug)
     {
         this.tokenPairName = tokenPairName;
+        this.apiToken = apiToken;
+        this.teamToken = teamToken;
         this.notifyTeam = notifyTeam;
         this.buildNotes = buildNotes;
         this.appendChangelog = appendChangelog;
@@ -276,6 +292,9 @@ public class TestflightRecorder extends Recorder
             if(tokenPair.getTokenPairName().equals(getTokenPairName()))
                 return tokenPair;
         }
+
+        if(getApiToken() != null && getTeamToken() != null)
+            return new TokenPair("", getApiToken(), getTeamToken());
 
         return null;
     }
