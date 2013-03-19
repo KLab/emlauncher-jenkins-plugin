@@ -158,7 +158,13 @@ public class TestflightRecorder extends Recorder
 
             String workspace = vars.expand("$WORKSPACE");
 
-            TestflightUploader.UploadRequest ur = createPartialUploadRequest(vars, build);
+            TestflightUploader.UploadRequest ur;
+            try {
+                ur = createPartialUploadRequest(vars, build);
+            } catch (MisconfiguredJobException mje) {
+                listener.getLogger().println(mje.getConfigurationMessage());
+                return false;
+            }
 
             TestflightRemoteRecorder remoteRecorder = new TestflightRemoteRecorder(workspace, ur, listener);
 
@@ -288,15 +294,17 @@ public class TestflightRecorder extends Recorder
     }
 
     private TokenPair getTokenPair() {
+        String tokenPairName = getTokenPairName();
         for (TokenPair tokenPair : getDescriptor().getTokenPairs()) {
-            if(tokenPair.getTokenPairName().equals(getTokenPairName()))
+            if(tokenPair.getTokenPairName().equals(tokenPairName))
                 return tokenPair;
         }
 
         if(getApiToken() != null && getTeamToken() != null)
             return new TokenPair("", getApiToken(), getTeamToken());
 
-        return null;
+        String tokenPairNameForMessage = tokenPairName != null ? tokenPairName : "(null)";
+        throw new MisconfiguredJobException(Messages._TestflightRecorder_TokenPairNotFound(tokenPairNameForMessage));
     }
 
     @Extension // This indicates to Jenkins that this is an implementation of an extension point.
