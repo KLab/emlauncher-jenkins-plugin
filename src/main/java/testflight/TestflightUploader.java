@@ -108,8 +108,8 @@ public class TestflightUploader implements Serializable {
         if (ur.lists.length() > 0)
             entity.addPart("distribution_lists", new StringBody(ur.lists));
         entity.addPart("notify", new StringBody(ur.notifyTeam ? "True" : "False"));
-        if (!tmpIsAndroid)
-            entity.addPart("replace", new StringBody(ur.replace ? "True" : "False"));
+        if (!tmpIsAndroid && ur.replace) 
+            entity.addPart("replace", new StringBody("True"));
         httpPost.setEntity(entity);
 
         logDebug("POST Request: " + ur);
