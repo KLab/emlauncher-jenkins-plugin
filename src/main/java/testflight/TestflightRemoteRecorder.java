@@ -99,7 +99,7 @@ public class TestflightRemoteRecorder implements Callable<Object, Throwable>, Se
     private File identifyDsym(String filePath, String ipaName) {
         File dsymFile;
         if (filePath != null && !filePath.trim().isEmpty()) {
-            dsymFile = new File(filePath);
+            dsymFile = findRelativeFile(filePath);
         } else {
             String fileName = FilenameUtils.removeExtension(ipaName);
             Collection<File> files = FileUtils.listFiles(new File(remoteWorkspace), FileFilterUtils.nameFileFilter(fileName + "-dSYM.zip"), TrueFileFilter.INSTANCE);
@@ -116,12 +116,22 @@ public class TestflightRemoteRecorder implements Callable<Object, Throwable>, Se
     private Collection<File> findIpaOrApkFiles(String filePath) {
         Collection<File> files;
         if (filePath != null && !filePath.trim().isEmpty()) {
-            files = Collections.singleton(new File(filePath));
+            files = Collections.singleton(findRelativeFile(filePath));
         } else {
             String[] extensions = {"ipa", "apk"};
             boolean recursive = true;
             files = FileUtils.listFiles(new File(remoteWorkspace), extensions, recursive);
         }
         return files;
+    }
+
+    private File findRelativeFile(String path) {
+        File f = new File(path);
+        if (f.exists())
+            return f;
+        f = new File(remoteWorkspace, path);
+        if (f.exists())
+            return f;
+        throw new IllegalArgumentException("Couldn't find file " + path + " in workspace " + remoteWorkspace);
     }
 }
