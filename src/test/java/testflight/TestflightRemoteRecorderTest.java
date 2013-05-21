@@ -9,8 +9,10 @@ import java.io.PrintStream;
 
 import hudson.Util;
 
+import junit.framework.Assert;
 import org.junit.Test;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
 import org.mockito.*;
@@ -18,6 +20,11 @@ import org.hamcrest.Description;
 
 
 public class TestflightRemoteRecorderTest {
+    @Test
+    public void testPrettySpeed() {
+        assertEquals("NaN bps", TestflightRemoteRecorder.prettySpeed(Float.NaN));
+    }
+
     @Test
     public void testYyy() throws Throwable {
         File tmpDir = Util.createTempDir();

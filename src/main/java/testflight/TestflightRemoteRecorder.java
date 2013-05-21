@@ -87,8 +87,8 @@ public class TestflightRemoteRecorder implements Callable<Object, Throwable>, Se
         return (postSize * 8000.0f) / uploadTimeMillis;
     }
 
-    private static String prettySpeed(float speed) {
-        if (speed == Float.NaN) return "NaN bps";
+    static String prettySpeed(float speed) {
+        if (Float.isNaN(speed)) return "NaN bps";
 
         String[] units = {"bps", "Kbps", "Mbps", "Gbps"};
         int idx = 0;
