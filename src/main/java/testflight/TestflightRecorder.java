@@ -59,7 +59,9 @@ public class TestflightRecorder extends Recorder
     {
         return this.appendChangelog;
     }
-    
+
+    /** Comma- or space-separated list of patterns of files/directories to be archived.
+     The variable hasn't been renamed yet for compatibility reasons */
     private String filePath;
     public String getFilePath()
     {
@@ -217,7 +219,7 @@ public class TestflightRecorder extends Recorder
     private TestflightUploader.UploadRequest createPartialUploadRequest(EnvVars vars, AbstractBuild<?, ?> build) {
         TestflightUploader.UploadRequest ur = new TestflightUploader.UploadRequest();
         TokenPair tokenPair = getTokenPair();
-        ur.filePath = vars.expand(StringUtils.trim(filePath));
+        ur.filePaths = vars.expand(StringUtils.trim(filePath));
         ur.dsymPath = vars.expand(StringUtils.trim(dsymPath));
         ur.apiToken = vars.expand(Secret.toString(tokenPair.getApiToken()));
         ur.buildNotes = createBuildNotes(vars.expand(buildNotes), build.getChangeSet());

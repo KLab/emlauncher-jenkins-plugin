@@ -2,18 +2,19 @@ package testflight;
 
 import hudson.model.BuildListener;
 import hudson.remoting.Callable;
+import hudson.Util;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 
-import org.apache.commons.io.FileUtils;
+import org.apache.tools.ant.types.FileSet;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.filefilter.FileFilterUtils;
-import org.apache.commons.io.filefilter.TrueFileFilter;
 
 /**
  * Code for sending a build to TestFlight which can run on a master or slave.
@@ -31,10 +32,7 @@ public class TestflightRemoteRecorder implements Callable<Object, Throwable>, Se
         this.listener = listener;
     }
 
-
-
     public Object call() throws Throwable {
-        HashMap result = new HashMap();
         TestflightUploader uploader = new TestflightUploader();
         if (uploadRequest.debug != null && uploadRequest.debug) {
             uploader.setLogger(new TestflightUploader.Logger() {
@@ -43,22 +41,28 @@ public class TestflightRemoteRecorder implements Callable<Object, Throwable>, Se
                 }
             });
         }
+        return uploadWith(uploader);
+    }
 
-        Collection<File> ipaOrApkFiles = findIpaOrApkFiles(uploadRequest.filePath);
+    HashMap uploadWith(TestflightUploader uploader) throws Throwable {
+        HashMap result = new HashMap();
+
+        Collection<File> ipaOrApkFiles = findIpaOrApkFiles(uploadRequest.filePaths);
         for (File ipaOrApkFile : ipaOrApkFiles) {
+            TestflightUploader.UploadRequest ur = TestflightUploader.UploadRequest.copy(uploadRequest);
             boolean isIpa = ipaOrApkFile.getName().endsWith(".ipa");
-            uploadRequest.file = ipaOrApkFile;
+            ur.file = ipaOrApkFile;
             if (isIpa) {
-                uploadRequest.dsymFile = identifyDsym(uploadRequest.dsymPath, ipaOrApkFile.getName());
+                ur.dsymFile = identifyDsym(ur.dsymPath, ipaOrApkFile.toString());
             }
 
-            listener.getLogger().println("File: " + uploadRequest.file);
+            listener.getLogger().println("File: " + ur.file);
             if (isIpa) {
-                listener.getLogger().println("DSYM: " + uploadRequest.dsymFile);
+                listener.getLogger().println("DSYM: " + ur.dsymFile);
             }
 
             long startTime = System.currentTimeMillis();
-            result.putAll(uploader.upload(uploadRequest));
+            result.putAll(uploader.upload(ur));
             long time = System.currentTimeMillis() - startTime;
 
             float speed = computeSpeed(time);
@@ -102,9 +106,9 @@ public class TestflightRemoteRecorder implements Callable<Object, Throwable>, Se
             dsymFile = findRelativeFile(filePath);
         } else {
             String fileName = FilenameUtils.removeExtension(ipaName);
-            Collection<File> files = FileUtils.listFiles(new File(remoteWorkspace), FileFilterUtils.nameFileFilter(fileName + "-dSYM.zip"), TrueFileFilter.INSTANCE);
-            if (!files.isEmpty()) {
-                dsymFile = files.iterator().next();
+            File f = new File(fileName + "-dSYM.zip");
+            if (f.exists()) {
+                dsymFile = f;
             } else {
                 dsymFile = null;
             }
@@ -113,14 +117,15 @@ public class TestflightRemoteRecorder implements Callable<Object, Throwable>, Se
     }
 
     /* if a specified filePath is specified, return it, otherwise find recursively all ipa/apk files in the remoteworkspace */
-    private Collection<File> findIpaOrApkFiles(String filePath) {
-        Collection<File> files;
-        if (filePath != null && !filePath.trim().isEmpty()) {
-            files = Collections.singleton(findRelativeFile(filePath));
-        } else {
-            String[] extensions = {"ipa", "apk"};
-            boolean recursive = true;
-            files = FileUtils.listFiles(new File(remoteWorkspace), extensions, recursive);
+    private Collection<File> findIpaOrApkFiles(String filePaths) {
+        if (filePaths == null || filePaths.trim().isEmpty()) {
+            filePaths = "**/*.ipa, **/*.apk";
+        }
+        FileSet fileSet = Util.createFileSet(new File(remoteWorkspace), filePaths, null);
+        List<File> files = new ArrayList<File>();
+        Iterator it = fileSet.iterator();
+        while(it.hasNext()) {
+            files.add(new File(it.next().toString()));
         }
         return files;
     }

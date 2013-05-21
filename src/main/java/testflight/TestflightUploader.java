@@ -31,7 +31,7 @@ public class TestflightUploader implements Serializable {
 
     static class UploadRequest implements Serializable
     {
-        String filePath;
+        String filePaths;
         String dsymPath;
         String apiToken;
         String teamToken;
@@ -49,7 +49,7 @@ public class TestflightUploader implements Serializable {
 
         public String toString() {
             return new ToStringBuilder(this)
-                .append("filePath", filePath)
+                .append("filePaths", filePaths)
                 .append("dsymPath", dsymPath)
                 .append("apiToken", "********")
                 .append("teamToken", "********")
@@ -66,6 +66,27 @@ public class TestflightUploader implements Serializable {
                 .append("debug", debug)
                 .toString();
         }
+
+        static UploadRequest copy(UploadRequest r) {
+            UploadRequest r2 = new UploadRequest();
+            r2.filePaths = r.filePaths;
+            r2.dsymPath = r.dsymPath;
+            r2.apiToken = r.apiToken;
+            r2.teamToken = r.teamToken;
+            r2.notifyTeam = r.notifyTeam;
+            r2.buildNotes = r.buildNotes;
+            r2.file = r.file;
+            r2.dsymFile = r.dsymFile;
+            r2.lists = r.lists;
+            r2.replace = r.replace;
+            r2.proxyHost = r.proxyHost;
+            r2.proxyUser = r.proxyUser;
+            r2.proxyPort = r.proxyPort;
+            r2.proxyPass = r.proxyPass;
+            r2.debug = r.debug;
+
+            return r2;
+        }
     }
 
     private Logger logger = null;
@@ -75,8 +96,6 @@ public class TestflightUploader implements Serializable {
     }
 
     public Map upload(UploadRequest ur) throws IOException, org.json.simple.parser.ParseException {
-        boolean tmpIsAndroid = ur.file.getName().endsWith(".apk"); // API is agnostic but currently has android specific issues
-
         DefaultHttpClient httpClient = new DefaultHttpClient();
 
         // Configure the proxy if necessary
@@ -108,7 +127,7 @@ public class TestflightUploader implements Serializable {
         if (ur.lists.length() > 0)
             entity.addPart("distribution_lists", new StringBody(ur.lists));
         entity.addPart("notify", new StringBody(ur.notifyTeam ? "True" : "False"));
-        if (!tmpIsAndroid && ur.replace) 
+        if (ur.replace) 
             entity.addPart("replace", new StringBody("True"));
         httpPost.setEntity(entity);
 
