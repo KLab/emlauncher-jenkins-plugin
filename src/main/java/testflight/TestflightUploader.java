@@ -19,6 +19,7 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.Scanner;
+
 import org.apache.commons.lang.builder.ToStringBuilder;
 
 /**
@@ -29,8 +30,7 @@ public class TestflightUploader implements Serializable {
         void logDebug(String message);
     }
 
-    static class UploadRequest implements Serializable
-    {
+    static class UploadRequest implements Serializable {
         String filePaths;
         String dsymPath;
         String apiToken;
@@ -49,22 +49,22 @@ public class TestflightUploader implements Serializable {
 
         public String toString() {
             return new ToStringBuilder(this)
-                .append("filePaths", filePaths)
-                .append("dsymPath", dsymPath)
-                .append("apiToken", "********")
-                .append("teamToken", "********")
-                .append("notifyTeam", notifyTeam)
-                .append("buildNotes", buildNotes)
-                .append("file", file)
-                .append("dsymFile", dsymFile)
-                .append("lists", lists)
-                .append("replace", replace)
-                .append("proxyHost", proxyHost)
-                .append("proxyUser", proxyUser)
-                .append("proxyPass", "********")
-                .append("proxyPort", proxyPort)
-                .append("debug", debug)
-                .toString();
+                    .append("filePaths", filePaths)
+                    .append("dsymPath", dsymPath)
+                    .append("apiToken", "********")
+                    .append("teamToken", "********")
+                    .append("notifyTeam", notifyTeam)
+                    .append("buildNotes", buildNotes)
+                    .append("file", file)
+                    .append("dsymFile", dsymFile)
+                    .append("lists", lists)
+                    .append("replace", replace)
+                    .append("proxyHost", proxyHost)
+                    .append("proxyUser", proxyUser)
+                    .append("proxyPass", "********")
+                    .append("proxyPort", proxyPort)
+                    .append("debug", debug)
+                    .toString();
         }
 
         static UploadRequest copy(UploadRequest r) {
@@ -99,14 +99,14 @@ public class TestflightUploader implements Serializable {
         DefaultHttpClient httpClient = new DefaultHttpClient();
 
         // Configure the proxy if necessary
-        if(ur.proxyHost!=null && !ur.proxyHost.isEmpty() && ur.proxyPort>0) {
+        if (ur.proxyHost != null && !ur.proxyHost.isEmpty() && ur.proxyPort > 0) {
             Credentials cred = null;
-            if(ur.proxyUser!=null && !ur.proxyUser.isEmpty())
+            if (ur.proxyUser != null && !ur.proxyUser.isEmpty())
                 cred = new UsernamePasswordCredentials(ur.proxyUser, ur.proxyPass);
 
-            httpClient.getCredentialsProvider().setCredentials(new AuthScope(ur.proxyHost, ur.proxyPort),cred);
+            httpClient.getCredentialsProvider().setCredentials(new AuthScope(ur.proxyHost, ur.proxyPort), cred);
             HttpHost proxy = new HttpHost(ur.proxyHost, ur.proxyPort);
-            httpClient.getParams().setParameter( ConnRoutePNames.DEFAULT_PROXY, proxy);
+            httpClient.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY, proxy);
         }
 
         HttpHost targetHost = new HttpHost("testflightapp.com");
@@ -116,7 +116,7 @@ public class TestflightUploader implements Serializable {
         MultipartEntity entity = new MultipartEntity();
         entity.addPart("api_token", new StringBody(ur.apiToken));
         entity.addPart("team_token", new StringBody(ur.teamToken));
-        entity.addPart("notes", new StringBody(ur.buildNotes, "text/plain",Charset.forName("UTF-8")));
+        entity.addPart("notes", new StringBody(ur.buildNotes, "text/plain", Charset.forName("UTF-8")));
         entity.addPart("file", fileBody);
 
         if (ur.dsymFile != null) {
@@ -127,13 +127,13 @@ public class TestflightUploader implements Serializable {
         if (ur.lists.length() > 0)
             entity.addPart("distribution_lists", new StringBody(ur.lists));
         entity.addPart("notify", new StringBody(ur.notifyTeam ? "True" : "False"));
-        if (ur.replace) 
+        if (ur.replace)
             entity.addPart("replace", new StringBody("True"));
         httpPost.setEntity(entity);
 
         logDebug("POST Request: " + ur);
 
-        HttpResponse response = httpClient.execute(targetHost,httpPost);
+        HttpResponse response = httpClient.execute(targetHost, httpPost);
         HttpEntity resEntity = response.getEntity();
 
         InputStream is = resEntity.getContent();
@@ -153,7 +153,7 @@ public class TestflightUploader implements Serializable {
 
         JSONParser parser = new JSONParser();
 
-        return (Map)parser.parse(json);
+        return (Map) parser.parse(json);
     }
 
     private void logDebug(String message) {

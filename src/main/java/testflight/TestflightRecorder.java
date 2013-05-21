@@ -16,109 +16,110 @@ import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.util.*;
+
 import net.sf.json.JSONObject;
 import org.apache.commons.collections.CollectionUtils;
 import org.kohsuke.stapler.StaplerRequest;
 
-public class TestflightRecorder extends Recorder
-{
+public class TestflightRecorder extends Recorder {
     private String tokenPairName;
-    public String getTokenPairName()
-    {
+
+    public String getTokenPairName() {
         return this.tokenPairName;
     }
 
     private Secret apiToken;
+
     @Deprecated
-    public Secret getApiToken()
-    {
+    public Secret getApiToken() {
         return this.apiToken;
     }
 
     private Secret teamToken;
+
     @Deprecated
-    public Secret getTeamToken()
-    {
+    public Secret getTeamToken() {
         return this.teamToken;
     }
 
     private Boolean notifyTeam;
-    public Boolean getNotifyTeam()
-    {
+
+    public Boolean getNotifyTeam() {
         return this.notifyTeam;
     }
-    
+
     private String buildNotes;
-    public String getBuildNotes()
-    {
+
+    public String getBuildNotes() {
         return this.buildNotes;
     }
-    
+
     private boolean appendChangelog;
-    public boolean getAppendChangelog()
-    {
+
+    public boolean getAppendChangelog() {
         return this.appendChangelog;
     }
 
-    /** Comma- or space-separated list of patterns of files/directories to be archived.
-     The variable hasn't been renamed yet for compatibility reasons */
+    /**
+     * Comma- or space-separated list of patterns of files/directories to be archived.
+     * The variable hasn't been renamed yet for compatibility reasons
+     */
     private String filePath;
-    public String getFilePath()
-    {
+
+    public String getFilePath() {
         return this.filePath;
     }
-    
+
     private String dsymPath;
-    public String getDsymPath()
-    {
+
+    public String getDsymPath() {
         return this.dsymPath;
     }
-    
+
     private String lists;
-    public String getLists()
-    {
+
+    public String getLists() {
         return this.lists;
     }
-    
+
     private Boolean replace;
-    public Boolean getReplace()
-    {
+
+    public Boolean getReplace() {
         return this.replace;
     }
 
     private String proxyHost;
-    public String getProxyHost()
-    {
+
+    public String getProxyHost() {
         return proxyHost;
     }
-    
+
     private String proxyUser;
-    public String getProxyUser()
-    {
+
+    public String getProxyUser() {
         return proxyUser;
     }
 
     private String proxyPass;
-    public String getProxyPass()
-    {
+
+    public String getProxyPass() {
         return proxyPass;
     }
-    
+
     private int proxyPort;
-    public int getProxyPort()
-    {
+
+    public int getProxyPort() {
         return proxyPort;
     }
 
     private Boolean debug;
-    public Boolean getDebug()
-    {
+
+    public Boolean getDebug() {
         return this.debug;
     }
 
     @DataBoundConstructor
-    public TestflightRecorder(String tokenPairName, Secret apiToken, Secret teamToken, Boolean notifyTeam, String buildNotes, Boolean appendChangelog, String filePath, String dsymPath, String lists, Boolean replace, String proxyHost, String proxyUser, String proxyPass, int proxyPort, Boolean debug)
-    {
+    public TestflightRecorder(String tokenPairName, Secret apiToken, Secret teamToken, Boolean notifyTeam, String buildNotes, Boolean appendChangelog, String filePath, String dsymPath, String lists, Boolean replace, String proxyHost, String proxyUser, String proxyPass, int proxyPort, Boolean debug) {
         this.tokenPairName = tokenPairName;
         this.apiToken = apiToken;
         this.teamToken = teamToken;
@@ -138,24 +139,21 @@ public class TestflightRecorder extends Recorder
 
     @Override
     public DescriptorImpl getDescriptor() {
-        return (DescriptorImpl)super.getDescriptor();
+        return (DescriptorImpl) super.getDescriptor();
     }
 
-    public BuildStepMonitor getRequiredMonitorService( )
-    {
+    public BuildStepMonitor getRequiredMonitorService() {
         return BuildStepMonitor.NONE;
     }
 
     @Override
-    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, final BuildListener listener)
-    {
+    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, final BuildListener listener) {
         if (build.getResult().isWorseOrEqualTo(Result.FAILURE))
             return false;
 
         listener.getLogger().println(Messages.TestflightRecorder_InfoUploading());
 
-        try
-        {
+        try {
             EnvVars vars = build.getEnvironment(listener);
 
             String workspace = vars.expand("$WORKSPACE");
@@ -182,7 +180,7 @@ public class TestflightRecorder extends Recorder
             }
 
             TestflightBuildAction installAction = new TestflightBuildAction();
-            String installUrl = (String)parsedMap.get("install_url");
+            String installUrl = (String) parsedMap.get("install_url");
             installAction.displayName = Messages.TestflightRecorder_InstallLinkText();
             installAction.iconFileName = "package.gif";
             installAction.urlName = installUrl;
@@ -190,7 +188,7 @@ public class TestflightRecorder extends Recorder
             listener.getLogger().println(Messages.TestflightRecorder_InfoInstallLink(installUrl));
 
             TestflightBuildAction configureAction = new TestflightBuildAction();
-            String configUrl = (String)parsedMap.get("config_url");
+            String configUrl = (String) parsedMap.get("config_url");
             configureAction.displayName = Messages.TestflightRecorder_ConfigurationLinkText();
             configureAction.iconFileName = "gear2.gif";
             configureAction.urlName = configUrl;
@@ -205,9 +203,7 @@ public class TestflightRecorder extends Recorder
                 envData.add("TESTFLIGHT_INSTALL_URL", installUrl);
                 envData.add("TESTFLIGHT_CONFIG_URL", configUrl);
             }
-        }
-        catch (Throwable e)
-        {
+        } catch (Throwable e) {
             listener.getLogger().println(e);
             e.printStackTrace(listener.getLogger());
             return false;
@@ -237,25 +233,23 @@ public class TestflightRecorder extends Recorder
 
     // Append the changelog if we should and can
     private String createBuildNotes(String buildNotes, final ChangeLogSet<?> changeSet) {
-        if (appendChangelog) 
-        {
+        if (appendChangelog) {
             StringBuilder stringBuilder = new StringBuilder();
-            
+
             // Show the build notes first
             stringBuilder.append(buildNotes);
-            
+
             // Then append the changelog
             stringBuilder.append("\n\n")
-                .append(changeSet.isEmptySet() ? Messages.TestflightRecorder_EmptyChangeSet() : Messages.TestflightRecorder_Changelog())
-                .append("\n");
-            
+                    .append(changeSet.isEmptySet() ? Messages.TestflightRecorder_EmptyChangeSet() : Messages.TestflightRecorder_Changelog())
+                    .append("\n");
+
             int entryNumber = 1;
-            
-            for (Entry entry : changeSet) 
-            {
+
+            for (Entry entry : changeSet) {
                 stringBuilder.append("\n").append(entryNumber).append(". ");
                 stringBuilder.append(entry.getMsg()).append(" \u2014 ").append(entry.getAuthor());
-                
+
                 entryNumber++;
             }
             buildNotes = stringBuilder.toString();
@@ -264,34 +258,30 @@ public class TestflightRecorder extends Recorder
     }
 
     @Override
-    public Collection<? extends Action> getProjectActions(AbstractProject<?, ?> project)
-    {
+    public Collection<? extends Action> getProjectActions(AbstractProject<?, ?> project) {
         ArrayList<TestflightBuildAction> actions = new ArrayList<TestflightBuildAction>();
-        RunList<? extends AbstractBuild<?,?>> builds = project.getBuilds();
+        RunList<? extends AbstractBuild<?, ?>> builds = project.getBuilds();
 
         Collection predicated = CollectionUtils.select(builds, new Predicate() {
             public boolean evaluate(Object o) {
-				Result result  = ((AbstractBuild<?,?>)o).getResult();
-				if (result == null) return false; // currently running builds can have a null result
+                Result result = ((AbstractBuild<?, ?>) o).getResult();
+                if (result == null) return false; // currently running builds can have a null result
                 return result.isBetterOrEqualTo(Result.SUCCESS);
             }
         });
 
-        ArrayList<AbstractBuild<?,?>> filteredList = new ArrayList<AbstractBuild<?,?>>(predicated);
+        ArrayList<AbstractBuild<?, ?>> filteredList = new ArrayList<AbstractBuild<?, ?>>(predicated);
 
 
         Collections.reverse(filteredList);
-        for (AbstractBuild<?,?> build : filteredList)
-        {
-           List<TestflightBuildAction> testflightActions = build.getActions(TestflightBuildAction.class);
-           if (testflightActions != null && testflightActions.size() > 0)
-           {
-               for (TestflightBuildAction action : testflightActions)
-               {
-                   actions.add(new TestflightBuildAction(action));
-               }
-               break;
-           }
+        for (AbstractBuild<?, ?> build : filteredList) {
+            List<TestflightBuildAction> testflightActions = build.getActions(TestflightBuildAction.class);
+            if (testflightActions != null && testflightActions.size() > 0) {
+                for (TestflightBuildAction action : testflightActions) {
+                    actions.add(new TestflightBuildAction(action));
+                }
+                break;
+            }
         }
 
         return actions;
@@ -300,11 +290,11 @@ public class TestflightRecorder extends Recorder
     private TokenPair getTokenPair() {
         String tokenPairName = getTokenPairName();
         for (TokenPair tokenPair : getDescriptor().getTokenPairs()) {
-            if(tokenPair.getTokenPairName().equals(tokenPairName))
+            if (tokenPair.getTokenPairName().equals(tokenPairName))
                 return tokenPair;
         }
 
-        if(getApiToken() != null && getTeamToken() != null)
+        if (getApiToken() != null && getTeamToken() != null)
             return new TokenPair("", getApiToken(), getTeamToken());
 
         String tokenPairNameForMessage = tokenPairName != null ? tokenPairName : "(null)";
@@ -312,15 +302,14 @@ public class TestflightRecorder extends Recorder
     }
 
     @Extension // This indicates to Jenkins that this is an implementation of an extension point.
-    public static final class DescriptorImpl extends BuildStepDescriptor<Publisher>
-    {
+    public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
         private final CopyOnWriteList<TokenPair> tokenPairs = new CopyOnWriteList<TokenPair>();
 
         public DescriptorImpl() {
             super(TestflightRecorder.class);
             load();
         }
-                
+
         public boolean isApplicable(Class<? extends AbstractProject> aClass) {
             // Indicates that this builder can be used with all kinds of project types
             return true;
@@ -332,7 +321,7 @@ public class TestflightRecorder extends Recorder
             save();
             return true;
         }
-                
+
         /**
          * This human readable name is used in the configuration screen.
          */
@@ -346,19 +335,27 @@ public class TestflightRecorder extends Recorder
     }
 
     private static class EnvAction implements EnvironmentContributingAction {
-        private transient Map<String,String> data = new HashMap<String,String>();
+        private transient Map<String, String> data = new HashMap<String, String>();
 
         private void add(String key, String value) {
-            if (data==null) return;
+            if (data == null) return;
             data.put(key, value);
         }
 
-        public void buildEnvVars(AbstractBuild<?,?> build, EnvVars env) {
-            if (data!=null) env.putAll(data);
+        public void buildEnvVars(AbstractBuild<?, ?> build, EnvVars env) {
+            if (data != null) env.putAll(data);
         }
 
-        public String getIconFileName() { return null; }
-        public String getDisplayName() { return null; }
-        public String getUrlName() { return null; }
-    }    
+        public String getIconFileName() {
+            return null;
+        }
+
+        public String getDisplayName() {
+            return null;
+        }
+
+        public String getUrlName() {
+            return null;
+        }
+    }
 }

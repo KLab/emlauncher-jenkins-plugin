@@ -18,7 +18,7 @@ import org.apache.commons.io.FilenameUtils;
 
 /**
  * Code for sending a build to TestFlight which can run on a master or slave.
- * 
+ * <p/>
  * When the ipa/apk file or optional dsym file are not specified, this class first tries to resolve their paths, searching them inside the workspace.
  */
 public class TestflightRemoteRecorder implements Callable<Object, Throwable>, Serializable {
@@ -79,22 +79,22 @@ public class TestflightRemoteRecorder implements Callable<Object, Throwable>, Se
         }
         long postSize = 0;
         if (uploadRequest.file != null) {
-           postSize += uploadRequest.file.length();           
+            postSize += uploadRequest.file.length();
         }
         if (uploadRequest.dsymFile != null) {
-           postSize += uploadRequest.dsymFile.length();           
+            postSize += uploadRequest.dsymFile.length();
         }
-        return (postSize*8000.0f)/uploadTimeMillis;
+        return (postSize * 8000.0f) / uploadTimeMillis;
     }
 
     private static String prettySpeed(float speed) {
         if (speed == Float.NaN) return "NaN bps";
 
-        String[] units = { "bps", "Kbps", "Mbps", "Gbps" };
-        int idx=0;
+        String[] units = {"bps", "Kbps", "Mbps", "Gbps"};
+        int idx = 0;
         while (speed > 1024 && idx <= units.length - 1) {
             speed /= 1024;
-            idx+=1;
+            idx += 1;
         }
         return String.format("%.2f", speed) + units[idx];
     }
@@ -124,7 +124,7 @@ public class TestflightRemoteRecorder implements Callable<Object, Throwable>, Se
         FileSet fileSet = Util.createFileSet(new File(remoteWorkspace), filePaths, null);
         List<File> files = new ArrayList<File>();
         Iterator it = fileSet.iterator();
-        while(it.hasNext()) {
+        while (it.hasNext()) {
             files.add(new File(it.next().toString()));
         }
         return files;

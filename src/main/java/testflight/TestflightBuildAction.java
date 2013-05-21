@@ -3,18 +3,15 @@ package testflight;
 import hudson.model.Action;
 import hudson.model.ProminentProjectAction;
 
-public class TestflightBuildAction implements ProminentProjectAction
-{
+public class TestflightBuildAction implements ProminentProjectAction {
     public String iconFileName;
     public String displayName;
     public String urlName;
 
-    public TestflightBuildAction()
-    {
+    public TestflightBuildAction() {
     }
 
-    public TestflightBuildAction(Action action)
-    {
+    public TestflightBuildAction(Action action) {
         iconFileName = action.getIconFileName();
         displayName = action.getDisplayName();
         urlName = action.getUrlName();
@@ -24,11 +21,11 @@ public class TestflightBuildAction implements ProminentProjectAction
         return iconFileName;
     }
 
-   public String getDisplayName() {
-       return displayName;
-   }
+    public String getDisplayName() {
+        return displayName;
+    }
 
-   public String getUrlName() {
-       return urlName;
-   }
+    public String getUrlName() {
+        return urlName;
+    }
 }
