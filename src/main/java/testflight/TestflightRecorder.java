@@ -3,6 +3,7 @@ package testflight;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.Launcher;
+import hudson.ProxyConfiguration;
 import hudson.model.*;
 import hudson.model.AbstractBuild;
 import hudson.scm.ChangeLogSet;
@@ -14,6 +15,7 @@ import hudson.util.Secret;
 import org.apache.commons.collections.Predicate;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
+import hudson.model.Hudson;
 
 import java.util.*;
 
@@ -90,24 +92,28 @@ public class TestflightRecorder extends Recorder {
 
     private String proxyHost;
 
+    @Deprecated
     public String getProxyHost() {
         return proxyHost;
     }
 
     private String proxyUser;
 
+    @Deprecated
     public String getProxyUser() {
         return proxyUser;
     }
 
     private String proxyPass;
 
+    @Deprecated
     public String getProxyPass() {
         return proxyPass;
     }
 
     private int proxyPort;
 
+    @Deprecated
     public int getProxyPort() {
         return proxyPort;
     }
@@ -221,14 +227,28 @@ public class TestflightRecorder extends Recorder {
         ur.buildNotes = createBuildNotes(vars.expand(buildNotes), build.getChangeSet());
         ur.lists = vars.expand(lists);
         ur.notifyTeam = notifyTeam;
-        ur.proxyHost = proxyHost;
-        ur.proxyPass = proxyPass;
-        ur.proxyPort = proxyPort;
-        ur.proxyUser = proxyUser;
+        ProxyConfiguration proxy = getProxy();
+        ur.proxyHost = proxy.name;
+        ur.proxyPass = proxy.getPassword();
+        ur.proxyPort = proxy.port;
+        ur.proxyUser = proxy.getUserName();
         ur.replace = replace;
         ur.teamToken = vars.expand(Secret.toString(tokenPair.getTeamToken()));
         ur.debug = debug;
         return ur;
+    }
+
+    private ProxyConfiguration getProxy() {
+        ProxyConfiguration proxy;
+        if (Hudson.getInstance() != null && Hudson.getInstance().proxy != null) {
+            proxy = Hudson.getInstance().proxy;
+        } else if (proxyHost != null && proxyPort > 0) {
+            // backward compatibility for pre-1.3.7 configurations
+            proxy = new ProxyConfiguration(proxyHost, proxyPort, proxyUser, proxyPass);
+        } else {
+            proxy = new ProxyConfiguration("", 0, "", "");
+        }
+        return proxy;
     }
 
     // Append the changelog if we should and can
