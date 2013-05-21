@@ -17,7 +17,7 @@
     </select>
   </f:entry>
 
-  <f:entry title="IPA/APK File" field="filePath">
+  <f:entry title="IPA/APK Files (optional)" field="filePath">
     <f:textbox />
   </f:entry>
   <f:entry title="dSYM File (optional)" field="dsymPath">

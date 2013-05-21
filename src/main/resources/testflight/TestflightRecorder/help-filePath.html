@@ -1,0 +1,14 @@
+<div>
+    The path of the file(s) to upload to testflight.
+
+    Can use wildcards like 'module/dist/**/*.ipa'.
+    If not specified the default pattern is '**/*.ipa, **/*.apk', i.e. will search recursively for any IPA and APK it finds.
+
+    See <a href='http://ant.apache.org/manual/Types/fileset.html'>
+    the @includes of Ant fileset</a> for the exact format.
+    The base directory is <a href='ws/'>the workspace</a>.
+
+    If specified, it is interpreted as a pattern of files to search for.
+
+    Note: each file is uploaded in its own web request.
+</div>
