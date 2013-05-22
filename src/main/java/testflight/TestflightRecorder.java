@@ -174,40 +174,23 @@ public class TestflightRecorder extends Recorder {
 
             TestflightRemoteRecorder remoteRecorder = new TestflightRemoteRecorder(workspace, ur, listener);
 
-            final Map parsedMap;
+            final List<Map> parsedMaps;
 
             try {
                 Object result = launcher.getChannel().call(remoteRecorder);
-                parsedMap = (Map) result;
+                parsedMaps = (List<Map>) result;
             } catch (UploadException ue) {
                 listener.getLogger().println(Messages.TestflightRecorder_IncorrectResponseCode(ue.getStatusCode()));
                 listener.getLogger().println(ue.getResponseBody());
                 return false;
             }
 
-            TestflightBuildAction installAction = new TestflightBuildAction();
-            String installUrl = (String) parsedMap.get("install_url");
-            installAction.displayName = Messages.TestflightRecorder_InstallLinkText();
-            installAction.iconFileName = "package.gif";
-            installAction.urlName = installUrl;
-            build.addAction(installAction);
-            listener.getLogger().println(Messages.TestflightRecorder_InfoInstallLink(installUrl));
-
-            TestflightBuildAction configureAction = new TestflightBuildAction();
-            String configUrl = (String) parsedMap.get("config_url");
-            configureAction.displayName = Messages.TestflightRecorder_ConfigurationLinkText();
-            configureAction.iconFileName = "gear2.gif";
-            configureAction.urlName = configUrl;
-            build.addAction(configureAction);
-            listener.getLogger().println(Messages.TestflightRecorder_InfoConfigurationLink(configUrl));
-
-            build.addAction(new EnvAction());
-
-            // Add info about the selected build into the environment
-            EnvAction envData = build.getAction(EnvAction.class);
-            if (envData != null) {
-                envData.add("TESTFLIGHT_INSTALL_URL", installUrl);
-                envData.add("TESTFLIGHT_CONFIG_URL", configUrl);
+            if (parsedMaps.size() == 0) {
+                listener.getLogger().println(Messages.TestflightRecorder_NoUploadedFile(ur.filePaths));
+                return false;
+            }
+            for (Map parsedMap: parsedMaps) {
+                addTestflightLinks(build, listener, parsedMap);
             }
         } catch (Throwable e) {
             listener.getLogger().println(e);
@@ -216,6 +199,33 @@ public class TestflightRecorder extends Recorder {
         }
 
         return true;
+    }
+
+    private void addTestflightLinks(AbstractBuild<?, ?> build, BuildListener listener, Map parsedMap) {
+        TestflightBuildAction installAction = new TestflightBuildAction();
+        String installUrl = (String) parsedMap.get("install_url");
+        installAction.displayName = Messages.TestflightRecorder_InstallLinkText();
+        installAction.iconFileName = "package.gif";
+        installAction.urlName = installUrl;
+        build.addAction(installAction);
+        listener.getLogger().println(Messages.TestflightRecorder_InfoInstallLink(installUrl));
+
+        TestflightBuildAction configureAction = new TestflightBuildAction();
+        String configUrl = (String) parsedMap.get("config_url");
+        configureAction.displayName = Messages.TestflightRecorder_ConfigurationLinkText();
+        configureAction.iconFileName = "gear2.gif";
+        configureAction.urlName = configUrl;
+        build.addAction(configureAction);
+        listener.getLogger().println(Messages.TestflightRecorder_InfoConfigurationLink(configUrl));
+
+        build.addAction(new EnvAction());
+
+        // Add info about the selected build into the environment
+        EnvAction envData = build.getAction(EnvAction.class);
+        if (envData != null) {
+            envData.add("TESTFLIGHT_INSTALL_URL", installUrl);
+            envData.add("TESTFLIGHT_CONFIG_URL", configUrl);
+        }
     }
 
     private TestflightUploader.UploadRequest createPartialUploadRequest(EnvVars vars, AbstractBuild<?, ?> build) {

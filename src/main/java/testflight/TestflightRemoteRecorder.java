@@ -8,7 +8,7 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.Map;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -44,11 +44,13 @@ public class TestflightRemoteRecorder implements Callable<Object, Throwable>, Se
         return uploadWith(uploader);
     }
 
-    HashMap uploadWith(TestflightUploader uploader) throws Throwable {
-        HashMap result = new HashMap();
+    List<Map> uploadWith(TestflightUploader uploader) throws Throwable {
+        List<Map> results = new ArrayList<Map>();
 
         Collection<File> ipaOrApkFiles = findIpaOrApkFiles(uploadRequest.filePaths);
         for (File ipaOrApkFile : ipaOrApkFiles) {
+            HashMap result = new HashMap();
+
             TestflightUploader.UploadRequest ur = TestflightUploader.UploadRequest.copy(uploadRequest);
             boolean isIpa = ipaOrApkFile.getName().endsWith(".ipa");
             ur.file = ipaOrApkFile;
@@ -67,9 +69,11 @@ public class TestflightRemoteRecorder implements Callable<Object, Throwable>, Se
 
             float speed = computeSpeed(time);
             listener.getLogger().println(Messages.TestflightRemoteRecorder_UploadSpeed(prettySpeed(speed)));
+
+            results.add(result);
         }
 
-        return result;
+        return results;
     }
 
     // return the speed in bits per second
