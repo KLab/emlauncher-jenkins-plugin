@@ -9,7 +9,8 @@ import java.io.PrintStream;
 
 import hudson.Util;
 
-import junit.framework.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -20,42 +21,80 @@ import org.hamcrest.Description;
 
 
 public class TestflightRemoteRecorderTest {
+    static File tmpDir;
+    static File ipa1;
+    static File dSYM1;
+    static File ipa2;
+    static File apk1;
+    TestflightUploader uploader;
+    BuildListener listener;
+
+    @BeforeClass
+    public static void SetUpDirectoryLayout() throws IOException {
+        tmpDir = Util.createTempDir();
+        new File(tmpDir, "a/b").mkdirs();
+        new File(tmpDir, "a/c").mkdirs();
+        new File(tmpDir, "a/d").mkdirs();
+        ipa1 = new File(tmpDir, "a/b/test.ipa");
+        dSYM1 = new File(tmpDir, "a/b/test-dSYM.zip");
+        ipa2 = new File(tmpDir, "a/c/test.ipa");
+        apk1 = new File(tmpDir, "a/d/test.apk");
+        touch(ipa1, 0);
+        touch(dSYM1, 0);
+        touch(ipa2, 0);
+        touch(apk1, 0);
+    }
+
+    @Before
+    public void setUpMocks() {
+        listener = mock(BuildListener.class);
+        uploader = mock(TestflightUploader.class);
+
+        PrintStream mockLogger = mock(PrintStream.class);
+        when(listener.getLogger()).thenReturn(mockLogger);
+    }
+
     @Test
     public void testPrettySpeed() {
         assertEquals("NaN bps", TestflightRemoteRecorder.prettySpeed(Float.NaN));
     }
 
     @Test
-    public void testYyy() throws Throwable {
-        File tmpDir = Util.createTempDir();
-        new File(tmpDir, "a/b").mkdirs();
-        new File(tmpDir, "a/c").mkdirs();
-        new File(tmpDir, "a/d").mkdirs();
-        File ipa1 = new File(tmpDir, "a/b/test.ipa");
-        File dSYM1 = new File(tmpDir, "a/b/test-dSYM.zip");
-        File ipa2 = new File(tmpDir, "a/c/test.ipa");
-        File apk1 = new File(tmpDir, "a/d/test.apk");
-        touch(ipa1, 0);
-        touch(dSYM1, 0);
-        touch(ipa2, 0);
-        touch(apk1, 0);
-
+    public void findMultipleFiles() throws Throwable {
         TestflightUploader.UploadRequest ur = createTestUploadRequest(null);
-
-        BuildListener listener = mock(BuildListener.class);
-        TestflightUploader uploader = mock(TestflightUploader.class);
-        PrintStream mockLogger = mock(PrintStream.class);
-
-        when(listener.getLogger()).thenReturn(mockLogger);
 
         TestflightRemoteRecorder remoteRecorder = new TestflightRemoteRecorder(tmpDir.toString(), ur, listener);
 
         remoteRecorder.uploadWith(uploader);
 
-        //InOrder inOrder = inOrder(uploader);
-
         verify(uploader).upload(argThat(new IsUploadRequestForRightFiles(ipa1, dSYM1)));
         verify(uploader).upload(argThat(new IsUploadRequestForRightFiles(ipa2, null)));
+        verify(uploader).upload(argThat(new IsUploadRequestForRightFiles(apk1, null)));
+
+        verifyNoMoreInteractions(uploader);
+    }
+
+    @Test
+    public void findFilesWithAbsolutePaths() throws Throwable {
+        TestflightUploader.UploadRequest ur = createTestUploadRequest(apk1.getPath());
+
+        TestflightRemoteRecorder remoteRecorder = new TestflightRemoteRecorder(tmpDir.toString(), ur, listener);
+
+        remoteRecorder.uploadWith(uploader);
+
+        verify(uploader).upload(argThat(new IsUploadRequestForRightFiles(apk1, null)));
+
+        verifyNoMoreInteractions(uploader);
+    }
+
+    @Test
+    public void findFilesWithRelativePaths() throws Throwable {
+        TestflightUploader.UploadRequest ur = createTestUploadRequest("a/d/test.apk");
+
+        TestflightRemoteRecorder remoteRecorder = new TestflightRemoteRecorder(tmpDir.toString(), ur, listener);
+
+        remoteRecorder.uploadWith(uploader);
+
         verify(uploader).upload(argThat(new IsUploadRequestForRightFiles(apk1, null)));
 
         verifyNoMoreInteractions(uploader);

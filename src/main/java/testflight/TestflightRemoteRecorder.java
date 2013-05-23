@@ -6,6 +6,7 @@ import hudson.Util;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
@@ -13,6 +14,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.tools.ant.types.FileSet;
 import org.apache.commons.io.FilenameUtils;
 
@@ -107,7 +109,10 @@ public class TestflightRemoteRecorder implements Callable<Object, Throwable>, Se
     private File identifyDsym(String filePath, String ipaName) {
         File dsymFile;
         if (filePath != null && !filePath.trim().isEmpty()) {
-            dsymFile = findRelativeFile(filePath);
+            dsymFile = findAbsoluteOrRelativeFile(filePath);
+            if (dsymFile == null)
+                throw new IllegalArgumentException("Couldn't find file " + filePath + " in workspace " + remoteWorkspace);
+
         } else {
             String fileName = FilenameUtils.removeExtension(ipaName);
             File f = new File(fileName + "-dSYM.zip");
@@ -122,11 +127,16 @@ public class TestflightRemoteRecorder implements Callable<Object, Throwable>, Se
 
     /* if a specified filePath is specified, return it, otherwise find recursively all ipa/apk files in the remoteworkspace */
     private Collection<File> findIpaOrApkFiles(String filePaths) {
-        if (filePaths == null || filePaths.trim().isEmpty()) {
+        if (StringUtils.isNotEmpty(filePaths)) {
+            File absolute = findAbsoluteOrRelativeFile(filePaths);
+            if (absolute != null && absolute.exists()) {
+                return Arrays.asList(absolute);
+            }
+        } else {
             filePaths = "**/*.ipa, **/*.apk";
         }
-        FileSet fileSet = Util.createFileSet(new File(remoteWorkspace), filePaths, null);
         List<File> files = new ArrayList<File>();
+        FileSet fileSet = Util.createFileSet(new File(remoteWorkspace), filePaths, null);
         Iterator it = fileSet.iterator();
         while (it.hasNext()) {
             files.add(new File(it.next().toString()));
@@ -134,13 +144,16 @@ public class TestflightRemoteRecorder implements Callable<Object, Throwable>, Se
         return files;
     }
 
-    private File findRelativeFile(String path) {
+    /*
+      * Finds a file that is absolute or relative to either the current direectory or the remoteWorkspace
+     */
+    private File findAbsoluteOrRelativeFile(String path) {
         File f = new File(path);
         if (f.exists())
             return f;
         f = new File(remoteWorkspace, path);
         if (f.exists())
             return f;
-        throw new IllegalArgumentException("Couldn't find file " + path + " in workspace " + remoteWorkspace);
+        return null;
     }
 }
