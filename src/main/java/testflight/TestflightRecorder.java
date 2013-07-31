@@ -124,12 +124,12 @@ public class TestflightRecorder extends Recorder {
         return this.debug;
     }
 
-	private TestflightTeam [] additionalTeams;
-	
-	public TestflightTeam [] getAdditionalTeams() {
-		return this.additionalTeams;
-	}
-	
+    private TestflightTeam [] additionalTeams;
+    
+    public TestflightTeam [] getAdditionalTeams() {
+        return this.additionalTeams;
+    }
+    
     @DataBoundConstructor
     public TestflightRecorder(String tokenPairName, Secret apiToken, Secret teamToken, Boolean notifyTeam, String buildNotes, Boolean appendChangelog, String filePath, String dsymPath, String lists, Boolean replace, String proxyHost, String proxyUser, String proxyPass, int proxyPort, Boolean debug, TestflightTeam [] additionalTeams) {
         this.tokenPairName = tokenPairName;
@@ -173,7 +173,7 @@ public class TestflightRecorder extends Recorder {
 
             List<TestflightUploader.UploadRequest> urList = new ArrayList<TestflightUploader.UploadRequest>();
             try {
-            	TestflightUploader.UploadRequest ur = createPartialUploadRequest(new TestflightTeam(getTokenPairName(), getFilePath(), getDsymPath()), vars, build);
+                TestflightUploader.UploadRequest ur = createPartialUploadRequest(new TestflightTeam(getTokenPairName(), getFilePath(), getDsymPath()), vars, build);
                 urList.add(ur);
             } catch (MisconfiguredJobException mje) {
                 listener.getLogger().println(mje.getConfigurationMessage());
@@ -181,39 +181,39 @@ public class TestflightRecorder extends Recorder {
             }
 
             if(additionalTeams != null) {
-            	for(TestflightTeam team : additionalTeams) {
+                for(TestflightTeam team : additionalTeams) {
                     try {
-                    	TestflightUploader.UploadRequest ur = createPartialUploadRequest(team, vars, build);
+                        TestflightUploader.UploadRequest ur = createPartialUploadRequest(team, vars, build);
                         urList.add(ur);
                     } catch (MisconfiguredJobException mje) {
                         listener.getLogger().println(mje.getConfigurationMessage());
                         return false;
                     }
-            		
-            	}
+                    
+                }
             }
             
             for(TestflightUploader.UploadRequest ur : urList) {
-	            TestflightRemoteRecorder remoteRecorder = new TestflightRemoteRecorder(workspace, ur, listener);
-	
-	            final List<Map> parsedMaps;
-	
-	            try {
-	                Object result = launcher.getChannel().call(remoteRecorder);
-	                parsedMaps = (List<Map>) result;
-	            } catch (UploadException ue) {
-	                listener.getLogger().println(Messages.TestflightRecorder_IncorrectResponseCode(ue.getStatusCode()));
-	                listener.getLogger().println(ue.getResponseBody());
-	                return false;
-	            }
-	
-	            if (parsedMaps.size() == 0) {
-	                listener.getLogger().println(Messages.TestflightRecorder_NoUploadedFile(ur.filePaths));
-	                return false;
-	            }
-	            for (Map parsedMap: parsedMaps) {
-	                addTestflightLinks(build, listener, parsedMap);
-	            }
+                TestflightRemoteRecorder remoteRecorder = new TestflightRemoteRecorder(workspace, ur, listener);
+    
+                final List<Map> parsedMaps;
+    
+                try {
+                    Object result = launcher.getChannel().call(remoteRecorder);
+                    parsedMaps = (List<Map>) result;
+                } catch (UploadException ue) {
+                    listener.getLogger().println(Messages.TestflightRecorder_IncorrectResponseCode(ue.getStatusCode()));
+                    listener.getLogger().println(ue.getResponseBody());
+                    return false;
+                }
+    
+                if (parsedMaps.size() == 0) {
+                    listener.getLogger().println(Messages.TestflightRecorder_NoUploadedFile(ur.filePaths));
+                    return false;
+                }
+                for (Map parsedMap: parsedMaps) {
+                    addTestflightLinks(build, listener, parsedMap);
+                }
             }
         } catch (Throwable e) {
             listener.getLogger().println(e);
