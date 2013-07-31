@@ -119,7 +119,11 @@ public class TestflightRemoteRecorder implements Callable<Object, Throwable>, Se
             if (f.exists()) {
                 dsymFile = f;
             } else {
-                dsymFile = null;
+                f = new File(fileName + ".dSYM.zip");
+                if (f.exists()) {
+                    dsymFile = f;
+                } else
+                    dsymFile = null;
             }
         }
         return dsymFile;

@@ -25,6 +25,8 @@ public class TestflightRemoteRecorderTest {
     static File ipa1;
     static File dSYM1;
     static File ipa2;
+    static File dSYM2;
+    static File ipa3;
     static File apk1;
     TestflightUploader uploader;
     BuildListener listener;
@@ -38,10 +40,14 @@ public class TestflightRemoteRecorderTest {
         ipa1 = new File(tmpDir, "a/b/test.ipa");
         dSYM1 = new File(tmpDir, "a/b/test-dSYM.zip");
         ipa2 = new File(tmpDir, "a/c/test.ipa");
+        dSYM2 = new File(tmpDir, "a/c/test.dSYM.zip");
+        ipa3 = new File(tmpDir, "a/d/test.ipa");
         apk1 = new File(tmpDir, "a/d/test.apk");
         touch(ipa1, 0);
         touch(dSYM1, 0);
         touch(ipa2, 0);
+        touch(dSYM2, 0);
+        touch(ipa3, 0);
         touch(apk1, 0);
     }
 
@@ -68,7 +74,8 @@ public class TestflightRemoteRecorderTest {
         remoteRecorder.uploadWith(uploader);
 
         verify(uploader).upload(argThat(new IsUploadRequestForRightFiles(ipa1, dSYM1)));
-        verify(uploader).upload(argThat(new IsUploadRequestForRightFiles(ipa2, null)));
+        verify(uploader).upload(argThat(new IsUploadRequestForRightFiles(ipa2, dSYM2)));
+        verify(uploader).upload(argThat(new IsUploadRequestForRightFiles(ipa3, null)));
         verify(uploader).upload(argThat(new IsUploadRequestForRightFiles(apk1, null)));
 
         verifyNoMoreInteractions(uploader);
