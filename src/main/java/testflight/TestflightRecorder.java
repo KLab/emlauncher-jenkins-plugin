@@ -172,27 +172,17 @@ public class TestflightRecorder extends Recorder {
             String workspace = vars.expand("$WORKSPACE");
 
             List<TestflightUploader.UploadRequest> urList = new ArrayList<TestflightUploader.UploadRequest>();
-            try {
-                TestflightUploader.UploadRequest ur = createPartialUploadRequest(new TestflightTeam(getTokenPairName(), getFilePath(), getDsymPath()), vars, build);
-                urList.add(ur);
-            } catch (MisconfiguredJobException mje) {
-                listener.getLogger().println(mje.getConfigurationMessage());
-                return false;
-            }
 
-            if(additionalTeams != null) {
-                for(TestflightTeam team : additionalTeams) {
-                    try {
-                        TestflightUploader.UploadRequest ur = createPartialUploadRequest(team, vars, build);
-                        urList.add(ur);
-                    } catch (MisconfiguredJobException mje) {
-                        listener.getLogger().println(mje.getConfigurationMessage());
-                        return false;
-                    }
-                    
+            for(TestflightTeam team : createDefaultPlusAdditionalTeams()) {
+                try {
+                    TestflightUploader.UploadRequest ur = createPartialUploadRequest(team, vars, build);
+                    urList.add(ur);
+                } catch (MisconfiguredJobException mje) {
+                    listener.getLogger().println(mje.getConfigurationMessage());
+                    return false;
                 }
             }
-            
+
             for(TestflightUploader.UploadRequest ur : urList) {
                 TestflightRemoteRecorder remoteRecorder = new TestflightRemoteRecorder(workspace, ur, listener);
     
@@ -222,6 +212,16 @@ public class TestflightRecorder extends Recorder {
         }
 
         return true;
+    }
+
+    private List<TestflightTeam> createDefaultPlusAdditionalTeams() {
+        List<TestflightTeam> allTeams = new ArrayList<TestflightTeam>();
+        // first team is default
+        allTeams.add(new TestflightTeam(getTokenPairName(), getFilePath(), getDsymPath()));
+        if(additionalTeams != null) {
+            allTeams.addAll(Arrays.asList(additionalTeams));
+        }
+        return allTeams;
     }
 
     private void addTestflightLinks(AbstractBuild<?, ?> build, BuildListener listener, Map parsedMap) {
@@ -341,7 +341,6 @@ public class TestflightRecorder extends Recorder {
     }
 
     private TokenPair getTokenPair(String tokenPairName) {
-        //String tokenPairName = getTokenPairName();
         for (TokenPair tokenPair : getDescriptor().getTokenPairs()) {
             if (tokenPair.getTokenPairName().equals(tokenPairName))
                 return tokenPair;
