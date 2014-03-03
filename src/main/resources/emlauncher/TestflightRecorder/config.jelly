@@ -9,10 +9,10 @@
     Creates a text field that shows the value of the "name" property.
     When submitted, it will be passed to the corresponding constructor parameter.
   -->
-  <f:entry title="Token Pair" field="tokenPairName">
-    <select class="setting-input" name="tokenPairName" description="Select TestFlight token pair. These are configured globally.">
-      <j:forEach var="tokenPair" items="${descriptor.tokenPairs}">
-        <f:option selected="${tokenPair.tokenPairName==instance.tokenPairName}">${tokenPair.tokenPairName}</f:option>
+  <f:entry title="Host Token Pair" field="hostTokenPairName">
+    <select class="setting-input" name="hostTokenPairName" description="Select EMLauncher token pair. These are configured globally.">
+      <j:forEach var="hostTokenPair" items="${descriptor.hostTokenPairs}">
+        <f:option selected="${hostTokenPair.hostTokenPairName==instance.hostTokenPairName}">${hostTokenPair.hostTokenPairName}</f:option>
       </j:forEach>
     </select>
   </f:entry>
@@ -23,13 +23,13 @@
   <f:entry title="dSYM File (optional)" field="dsymPath">
     <f:textbox />
   </f:entry>
-  <f:entry title="Additional Uploads" help="/descriptor/testflight.TestflightRecorder/help/additionalTeams">
+  <f:entry title="Additional Uploads" help="/descriptor/emlauncher.TestflightRecorder/help/additionalTeams">
     <f:repeatable name="additionalTeams" var="additionalTeam" items="${instance.additionalTeams}">
       <table width="100%">
-        <f:entry title="Token Pair">
-          <select class="setting-input" name="tokenPairName" description="Select TestFlight token pair. These are configured globally.">
-            <j:forEach var="tokenPair" items="${descriptor.tokenPairs}">
-              <f:option selected="${tokenPair.tokenPairName==additionalTeam.tokenPairName}">${tokenPair.tokenPairName}</f:option>
+        <f:entry title="Host Token Pair">
+          <select class="setting-input" name="hostTokenPairName" description="Select EMLauncher host token pair. These are configured globally.">
+            <j:forEach var="hostTokenPair" items="${descriptor.hostTokenPairs}">
+              <f:option selected="${hostTokenPair.hostTokenPairName==additionalTeam.hostTokenPairName}">${hostTokenPair.hostTokenPairName}</f:option>
             </j:forEach>
           </select>
         </f:entry>
@@ -47,20 +47,20 @@
       </table>
     </f:repeatable>
   </f:entry>      
-  <f:entry title="Build Notes" field="buildNotes">
+  <f:entry title="Title" field="title">
+    <f:textarea />
+  </f:entry>
+  <f:entry title="Description (Optional)" field="description">
+    <f:textarea />
+  </f:entry>
+  <f:entry title="Tags (Optional)" field="tags">
     <f:textarea />
   </f:entry>
   <f:entry title="Append changelog to build notes" field="appendChangelog">
     <f:checkbox />
   </f:entry>
   <f:advanced>
-    <f:entry title="Distribution Lists" field="lists">
-        <f:textbox />
-    </f:entry>
     <f:entry title="Notify Team" field="notifyTeam">
-        <f:checkbox />
-    </f:entry>
-    <f:entry title="Replace Build" field="replace">
         <f:checkbox />
     </f:entry>
 

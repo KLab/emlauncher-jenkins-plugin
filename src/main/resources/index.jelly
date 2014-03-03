@@ -2,5 +2,5 @@
   This view is used to render the installed plugins page.
 -->
 <div>
-  This plugin will upload .ipa or .apk file(s) to <a href="http://testflightapp.com">testflightapp.com</a> for distribution.
+  This plugin will upload .ipa or .apk file(s) to EMLauncher for distribution.
 </div>

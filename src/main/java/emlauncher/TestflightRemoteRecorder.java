@@ -1,4 +1,4 @@
-package testflight;
+package emlauncher;
 
 import hudson.model.BuildListener;
 import hudson.remoting.Callable;

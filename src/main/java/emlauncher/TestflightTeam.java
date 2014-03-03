@@ -1,27 +1,27 @@
-package testflight;
+package emlauncher;
 
 import org.kohsuke.stapler.DataBoundConstructor;
 
 public class TestflightTeam {
 
-    private String tokenPairName;
+    private String hostTokenPairName;
     private String filePath;
     private String dsymPath;
 
     @DataBoundConstructor
-    public TestflightTeam(String tokenPairName, String filePath, String dsymPath) {
+    public TestflightTeam(String hostTokenPairName, String filePath, String dsymPath) {
         super();
-        this.tokenPairName = tokenPairName;
+        this.hostTokenPairName = hostTokenPairName;
         this.filePath = filePath;
         this.dsymPath = dsymPath;
     }
 
-    public String getTokenPairName() {
-        return tokenPairName;
+    public String getHostTokenPairName() {
+        return hostTokenPairName;
     }
 
-    public void setTokenPairName(String tokenPairName) {
-        this.tokenPairName = tokenPairName;
+    public void setHostTokenPairName(String hostTokenPairName) {
+        this.hostTokenPairName = hostTokenPairName;
     }
 
     public String getFilePath() {

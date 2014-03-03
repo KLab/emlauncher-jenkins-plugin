@@ -1,4 +1,4 @@
-package testflight;
+package emlauncher;
 
 import java.io.File;
 
@@ -24,15 +24,15 @@ public class TestflightUploaderMain {
         });
 
         TestflightUploader.UploadRequest r = new TestflightUploader.UploadRequest();
-        r.apiToken = args[0];
-        r.teamToken = args[1];
-        r.buildNotes = args[2];
-        File file = new File(args[3]);
+        r.apiHost = args[0];
+        r.apiToken = args[1];
+        r.title = args[2];
+        r.description = args[3];
+        r.tags = args[4];
+        File file = new File(args[5]);
         r.file = file;
         r.dsymFile = null;
         r.notifyTeam = true;
-        r.replace = false;
-        r.lists = args[4];
 
         uploader.upload(r);
     }

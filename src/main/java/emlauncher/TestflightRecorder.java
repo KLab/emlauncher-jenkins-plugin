@@ -1,4 +1,4 @@
-package testflight;
+package emlauncher;
 
 import hudson.EnvVars;
 import hudson.Extension;
@@ -19,29 +19,37 @@ import hudson.model.Hudson;
 
 import java.util.*;
 
+import net.sf.json.JSON;
 import net.sf.json.JSONObject;
 import org.apache.commons.collections.CollectionUtils;
 import org.kohsuke.stapler.StaplerRequest;
 
 public class TestflightRecorder extends Recorder {
-    private String tokenPairName;
+    private String hostTokenPairName;
 
-    public String getTokenPairName() {
-        return this.tokenPairName;
+    public String getHostTokenPairName() {
+        return this.hostTokenPairName;
     }
+    
+    private String apiHost;
+    
+    /**
+		 * @return the apiHost
+		 */
+		public String getApiHost() {
+			return apiHost;
+		}
 
-    private Secret apiToken;
+		private Secret apiToken;
 
     @Deprecated
     public Secret getApiToken() {
         return this.apiToken;
     }
-
-    private Secret teamToken;
-
-    @Deprecated
-    public Secret getTeamToken() {
-        return this.teamToken;
+    
+    private boolean sslEnable;
+    public boolean getSslEnable() {
+    	return sslEnable;
     }
 
     private Boolean notifyTeam;
@@ -50,11 +58,32 @@ public class TestflightRecorder extends Recorder {
         return this.notifyTeam;
     }
 
-    private String buildNotes;
+    private String title;
 
-    public String getBuildNotes() {
-        return this.buildNotes;
-    }
+    /**
+		 * @return the title
+		 */
+		public String getTitle() {
+			return title;
+		}
+		
+    private String description;
+
+    /**
+		 * @return the description
+		 */
+		public String getDescription() {
+			return description;
+		}
+
+		private String tags;
+
+		/**
+		 * @return the tags
+		 */
+		public String getTags() {
+			return tags;
+		}
 
     private boolean appendChangelog;
 
@@ -76,18 +105,6 @@ public class TestflightRecorder extends Recorder {
 
     public String getDsymPath() {
         return this.dsymPath;
-    }
-
-    private String lists;
-
-    public String getLists() {
-        return this.lists;
-    }
-
-    private Boolean replace;
-
-    public Boolean getReplace() {
-        return this.replace;
     }
 
     private String proxyHost;
@@ -131,17 +148,18 @@ public class TestflightRecorder extends Recorder {
     }
     
     @DataBoundConstructor
-    public TestflightRecorder(String tokenPairName, Secret apiToken, Secret teamToken, Boolean notifyTeam, String buildNotes, Boolean appendChangelog, String filePath, String dsymPath, String lists, Boolean replace, String proxyHost, String proxyUser, String proxyPass, int proxyPort, Boolean debug, TestflightTeam [] additionalTeams) {
-        this.tokenPairName = tokenPairName;
+    public TestflightRecorder(String hostTokenPairName, String apiHost, Secret apiToken, boolean sslEnable, Boolean notifyTeam, String title, String description, String tags, Boolean appendChangelog, String filePath, String dsymPath, String proxyHost, String proxyUser, String proxyPass, int proxyPort, Boolean debug, TestflightTeam [] additionalTeams) {
+        this.hostTokenPairName = hostTokenPairName;
+        this.apiHost = apiHost;
         this.apiToken = apiToken;
-        this.teamToken = teamToken;
+        this.sslEnable = sslEnable;
         this.notifyTeam = notifyTeam;
-        this.buildNotes = buildNotes;
+        this.title = title;
+        this.description = description;
+        this.tags = tags;
         this.appendChangelog = appendChangelog;
         this.filePath = filePath;
         this.dsymPath = dsymPath;
-        this.replace = replace;
-        this.lists = lists;
         this.proxyHost = proxyHost;
         this.proxyUser = proxyUser;
         this.proxyPass = proxyPass;
@@ -217,7 +235,7 @@ public class TestflightRecorder extends Recorder {
     private List<TestflightTeam> createDefaultPlusAdditionalTeams() {
         List<TestflightTeam> allTeams = new ArrayList<TestflightTeam>();
         // first team is default
-        allTeams.add(new TestflightTeam(getTokenPairName(), getFilePath(), getDsymPath()));
+        allTeams.add(new TestflightTeam(getHostTokenPairName(), getFilePath(), getDsymPath()));
         if(additionalTeams != null) {
             allTeams.addAll(Arrays.asList(additionalTeams));
         }
@@ -226,7 +244,7 @@ public class TestflightRecorder extends Recorder {
 
     private void addTestflightLinks(AbstractBuild<?, ?> build, BuildListener listener, Map parsedMap) {
         TestflightBuildAction installAction = new TestflightBuildAction();
-        String installUrl = (String) parsedMap.get("install_url");
+        String installUrl = (String) parsedMap.get("package_url");
         installAction.displayName = Messages.TestflightRecorder_InstallLinkText();
         installAction.iconFileName = "package.gif";
         installAction.urlName = installUrl;
@@ -234,7 +252,7 @@ public class TestflightRecorder extends Recorder {
         listener.getLogger().println(Messages.TestflightRecorder_InfoInstallLink(installUrl));
 
         TestflightBuildAction configureAction = new TestflightBuildAction();
-        String configUrl = (String) parsedMap.get("config_url");
+        String configUrl = (String) parsedMap.get("application_url");
         configureAction.displayName = Messages.TestflightRecorder_ConfigurationLinkText();
         configureAction.iconFileName = "gear2.gif";
         configureAction.urlName = configUrl;
@@ -246,27 +264,28 @@ public class TestflightRecorder extends Recorder {
         // Add info about the selected build into the environment
         EnvAction envData = build.getAction(EnvAction.class);
         if (envData != null) {
-            envData.add("TESTFLIGHT_INSTALL_URL", installUrl);
-            envData.add("TESTFLIGHT_CONFIG_URL", configUrl);
+            envData.add("EMLAUNCHER_INSTALL_URL", installUrl);
+            envData.add("EMLAUNCHER_CONFIG_URL", configUrl);
         }
     }
 
     private TestflightUploader.UploadRequest createPartialUploadRequest(TestflightTeam team, EnvVars vars, AbstractBuild<?, ?> build) {
         TestflightUploader.UploadRequest ur = new TestflightUploader.UploadRequest();
-        TokenPair tokenPair = getTokenPair(team.getTokenPairName());
+        HostTokenPair hostTokenPair = getHostTokenPair(team.getHostTokenPairName());
         ur.filePaths = vars.expand(StringUtils.trim(team.getFilePath()));
         ur.dsymPath = vars.expand(StringUtils.trim(team.getDsymPath()));
-        ur.apiToken = vars.expand(Secret.toString(tokenPair.getApiToken()));
-        ur.buildNotes = createBuildNotes(vars.expand(buildNotes), build.getChangeSet());
-        ur.lists = vars.expand(lists);
+        ur.apiHost = vars.expand(hostTokenPair.getApiHost());
+        ur.apiToken = vars.expand(Secret.toString(hostTokenPair.getApiToken()));
+        ur.sslEnable = hostTokenPair.getSslEnable();
+        ur.title = vars.expand(title);
+        ur.description = vars.expand(description);
+        ur.tags = vars.expand(tags);
         ur.notifyTeam = notifyTeam;
         ProxyConfiguration proxy = getProxy();
         ur.proxyHost = proxy.name;
         ur.proxyPass = proxy.getPassword();
         ur.proxyPort = proxy.port;
         ur.proxyUser = proxy.getUserName();
-        ur.replace = replace;
-        ur.teamToken = vars.expand(Secret.toString(tokenPair.getTeamToken()));
         ur.debug = debug;
         return ur;
     }
@@ -340,22 +359,22 @@ public class TestflightRecorder extends Recorder {
         return actions;
     }
 
-    private TokenPair getTokenPair(String tokenPairName) {
-        for (TokenPair tokenPair : getDescriptor().getTokenPairs()) {
-            if (tokenPair.getTokenPairName().equals(tokenPairName))
-                return tokenPair;
+    private HostTokenPair getHostTokenPair(String hostTokenPairName) {
+        for (HostTokenPair hostTokenPair : getDescriptor().getHostTokenPairs()) {
+            if (hostTokenPair.getHostTokenPairName().equals(hostTokenPairName))
+                return hostTokenPair;
         }
 
-        if (getApiToken() != null && getTeamToken() != null)
-            return new TokenPair("", getApiToken(), getTeamToken());
+        if (getApiToken() != null && getApiHost() != null)
+            return new HostTokenPair("", getApiHost(), getApiToken(), getSslEnable());
 
-        String tokenPairNameForMessage = tokenPairName != null ? tokenPairName : "(null)";
-        throw new MisconfiguredJobException(Messages._TestflightRecorder_TokenPairNotFound(tokenPairNameForMessage));
+        String hostTokenPairNameForMessage = hostTokenPairName != null ? hostTokenPairName : "(null)";
+        throw new MisconfiguredJobException(Messages._TestflightRecorder_HostTokenPairNotFound(hostTokenPairNameForMessage));
     }
 
     @Extension // This indicates to Jenkins that this is an implementation of an extension point.
     public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
-        private final CopyOnWriteList<TokenPair> tokenPairs = new CopyOnWriteList<TokenPair>();
+        private final CopyOnWriteList<HostTokenPair> hostTokenPairs = new CopyOnWriteList<HostTokenPair>();
 
         public DescriptorImpl() {
             super(TestflightRecorder.class);
@@ -369,7 +388,12 @@ public class TestflightRecorder extends Recorder {
 
         @Override
         public boolean configure(StaplerRequest req, JSONObject json) throws FormException {
-            tokenPairs.replaceBy(req.bindParametersToList(TokenPair.class, "tokenPair."));
+        		if(((JSON)(json.get("hostTokenPair"))).isArray()){
+          		hostTokenPairs.replaceBy(req.bindJSONToList(HostTokenPair.class, json.getJSONArray("hostTokenPair")));
+            } else {
+          		hostTokenPairs.replaceBy(req.bindJSONToList(HostTokenPair.class, json.getJSONObject("hostTokenPair")));
+            }
+            
             save();
             return true;
         }
@@ -381,8 +405,8 @@ public class TestflightRecorder extends Recorder {
             return Messages.TestflightRecorder_UploadLinkText();
         }
 
-        public Iterable<TokenPair> getTokenPairs() {
-            return tokenPairs;
+        public Iterable<HostTokenPair> getHostTokenPairs() {
+            return hostTokenPairs;
         }
     }
 

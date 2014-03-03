@@ -1,4 +1,4 @@
-package testflight;
+package emlauncher;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
@@ -33,14 +33,19 @@ public class TestflightUploader implements Serializable {
     static class UploadRequest implements Serializable {
         String filePaths;
         String dsymPath;
+        String apiHost;
         String apiToken;
-        String teamToken;
+        boolean sslEnable;
+        //String teamToken;
         Boolean notifyTeam;
-        String buildNotes;
+        String title;
+        String description;
+        String tags;
+        //String buildNotes;
         File file;
         File dsymFile;
-        String lists;
-        Boolean replace;
+        //String lists;
+        //Boolean replace;
         String proxyHost;
         String proxyUser;
         String proxyPass;
@@ -51,14 +56,15 @@ public class TestflightUploader implements Serializable {
             return new ToStringBuilder(this)
                     .append("filePaths", filePaths)
                     .append("dsymPath", dsymPath)
+                    .append("apiHost", apiHost)
                     .append("apiToken", "********")
-                    .append("teamToken", "********")
+                    .append("ssl", sslEnable)
                     .append("notifyTeam", notifyTeam)
-                    .append("buildNotes", buildNotes)
+                    .append("title", title)
+                    .append("description", description)
+                    .append("tags", tags)
                     .append("file", file)
                     .append("dsymFile", dsymFile)
-                    .append("lists", lists)
-                    .append("replace", replace)
                     .append("proxyHost", proxyHost)
                     .append("proxyUser", proxyUser)
                     .append("proxyPass", "********")
@@ -71,14 +77,15 @@ public class TestflightUploader implements Serializable {
             UploadRequest r2 = new UploadRequest();
             r2.filePaths = r.filePaths;
             r2.dsymPath = r.dsymPath;
+            r2.apiHost = r.apiHost;
             r2.apiToken = r.apiToken;
-            r2.teamToken = r.teamToken;
+            r2.sslEnable = r.sslEnable;
             r2.notifyTeam = r.notifyTeam;
-            r2.buildNotes = r.buildNotes;
+            r2.title = r.title;
+            r2.description = r.description;
+            r2.tags = r.tags;
             r2.file = r.file;
             r2.dsymFile = r.dsymFile;
-            r2.lists = r.lists;
-            r2.replace = r.replace;
             r2.proxyHost = r.proxyHost;
             r2.proxyUser = r.proxyUser;
             r2.proxyPort = r.proxyPort;
@@ -108,15 +115,28 @@ public class TestflightUploader implements Serializable {
             HttpHost proxy = new HttpHost(ur.proxyHost, ur.proxyPort);
             httpClient.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY, proxy);
         }
-
-        HttpHost targetHost = new HttpHost("testflightapp.com");
-        HttpPost httpPost = new HttpPost("/api/builds.json");
+        
+        HttpHost targetHost;
+        if(ur.sslEnable){
+        	targetHost = new HttpHost(ur.apiHost, 443, "https");
+        } else {
+        	targetHost = new HttpHost(ur.apiHost);
+        }
+        HttpPost httpPost = new HttpPost("/api/upload");
         FileBody fileBody = new FileBody(ur.file);
 
         MultipartEntity entity = new MultipartEntity();
-        entity.addPart("api_token", new StringBody(ur.apiToken));
-        entity.addPart("team_token", new StringBody(ur.teamToken));
-        entity.addPart("notes", new StringBody(ur.buildNotes, "text/plain", Charset.forName("UTF-8")));
+        entity.addPart("api_key", new StringBody(ur.apiToken));
+        entity.addPart("title", new StringBody(ur.title));
+        
+        if(ur.description != null){
+          entity.addPart("description", new StringBody(ur.description, "text/plain", Charset.forName("UTF-8")));
+        }
+        
+        if(ur.tags != null){
+          entity.addPart("tags", new StringBody(ur.tags));
+        }
+        
         entity.addPart("file", fileBody);
 
         if (ur.dsymFile != null) {
@@ -124,11 +144,8 @@ public class TestflightUploader implements Serializable {
             entity.addPart("dsym", dsymFileBody);
         }
 
-        if (ur.lists.length() > 0)
-            entity.addPart("distribution_lists", new StringBody(ur.lists));
         entity.addPart("notify", new StringBody(ur.notifyTeam ? "True" : "False"));
-        if (ur.replace)
-            entity.addPart("replace", new StringBody("True"));
+
         httpPost.setEntity(entity);
 
         logDebug("POST Request: " + ur);

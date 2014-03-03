@@ -1,4 +1,4 @@
-package testflight;
+package emlauncher;
 
 import hudson.model.BuildListener;
 
@@ -18,7 +18,6 @@ import static org.mockito.Mockito.*;
 
 import org.mockito.*;
 import org.hamcrest.Description;
-
 
 public class TestflightRemoteRecorderTest {
     static File tmpDir;

@@ -1,4 +1,4 @@
-package testflight;
+package emlauncher;
 
 import org.apache.http.HttpResponse;
 

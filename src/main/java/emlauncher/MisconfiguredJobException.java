@@ -1,4 +1,4 @@
-package testflight;
+package emlauncher;
 
 import org.jvnet.localizer.Localizable;
 

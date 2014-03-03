@@ -1,4 +1,4 @@
-package testflight;
+package emlauncher;
 
 import hudson.model.Action;
 import hudson.model.ProminentProjectAction;
