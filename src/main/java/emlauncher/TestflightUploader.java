@@ -12,6 +12,8 @@ import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.params.HttpParams;
 import org.json.simple.parser.JSONParser;
 import org.apache.commons.io.IOUtils;
 
@@ -104,6 +106,11 @@ public class TestflightUploader implements Serializable {
 
     public Map upload(UploadRequest ur) throws IOException, org.json.simple.parser.ParseException {
         DefaultHttpClient httpClient = new DefaultHttpClient();
+
+        HttpParams httpParams = httpClient.getParams();
+        
+        HttpConnectionParams.setConnectionTimeout(httpParams, 900*1000);
+        HttpConnectionParams.setSoTimeout(httpParams, 900*1000);
 
         // Configure the proxy if necessary
         if (ur.proxyHost != null && !ur.proxyHost.isEmpty() && ur.proxyPort > 0) {
