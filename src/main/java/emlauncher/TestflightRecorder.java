@@ -143,6 +143,11 @@ public class TestflightRecorder extends Recorder {
 
     private int timeout;
 
+    @Deprecated
+    public int getTimeout() {
+        return timeout;
+    }
+
     private TestflightTeam [] additionalTeams;
     
     public TestflightTeam [] getAdditionalTeams() {
@@ -290,6 +295,7 @@ public class TestflightRecorder extends Recorder {
         ur.proxyPort = proxy.port;
         ur.proxyUser = proxy.getUserName();
         ur.debug = debug;
+        ur.timeout = getTimeout();
         return ur;
     }
 

@@ -69,7 +69,7 @@
     </f:entry>
 
     <f:entry title="Connection Timeout (ms)" field="timeout">
-      <f:textbox />
+      <f:textbox default="600000" />
     </f:entry>
   </f:advanced>
 </j:jelly>
