@@ -53,6 +53,7 @@ public class TestflightUploader implements Serializable {
         String proxyPass;
         int proxyPort;
         Boolean debug;
+        int timeout;
 
         public String toString() {
             return new ToStringBuilder(this)
@@ -71,6 +72,7 @@ public class TestflightUploader implements Serializable {
                     .append("proxyUser", proxyUser)
                     .append("proxyPass", "********")
                     .append("proxyPort", proxyPort)
+                    .append("timeout", timeout)
                     .append("debug", debug)
                     .toString();
         }
@@ -93,6 +95,7 @@ public class TestflightUploader implements Serializable {
             r2.proxyPort = r.proxyPort;
             r2.proxyPass = r.proxyPass;
             r2.debug = r.debug;
+            r2.timeout = r.timeout;
 
             return r2;
         }
@@ -109,8 +112,8 @@ public class TestflightUploader implements Serializable {
 
         HttpParams httpParams = httpClient.getParams();
         
-        HttpConnectionParams.setConnectionTimeout(httpParams, 900*1000);
-        HttpConnectionParams.setSoTimeout(httpParams, 900*1000);
+        HttpConnectionParams.setConnectionTimeout(httpParams, ur.timeout);
+        HttpConnectionParams.setSoTimeout(httpParams, ur.timeout);
 
         // Configure the proxy if necessary
         if (ur.proxyHost != null && !ur.proxyHost.isEmpty() && ur.proxyPort > 0) {
