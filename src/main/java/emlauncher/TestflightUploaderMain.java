@@ -1,10 +1,6 @@
 package emlauncher;
 
 import java.io.File;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.LogManager;
-import java.util.logging.Logger;
-
 
 public class TestflightUploaderMain {
     /**
@@ -20,15 +16,7 @@ public class TestflightUploaderMain {
     }
 
     private static void upload(String[] args) throws Exception {
-        
-        System.err.println(args);
-        System.err.println("0 :" + args[0]);
-
         TestflightUploader uploader = new TestflightUploader();
-
-        Logger lg = LogManager.getLogManager().getLogger("testtest");
-        //lg.addHandler (new ConsoleHandler());
-
         uploader.setLogger(new TestflightUploader.Logger() {
             public void logDebug(String message) {
                 System.out.println(message);
@@ -46,7 +34,7 @@ public class TestflightUploaderMain {
         r.dsymFile = null;
         r.notifyTeam = true;
         r.timeout = Integer.parseInt(args[6]);
-        
+
         uploader.upload(r);
     }
 }
