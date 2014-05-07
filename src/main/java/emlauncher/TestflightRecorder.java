@@ -142,8 +142,7 @@ public class TestflightRecorder extends Recorder {
     }
 
     private int timeout;
-
-    @Deprecated
+    
     public int getTimeout() {
         return timeout;
     }
