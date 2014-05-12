@@ -34,13 +34,13 @@ public class TestflightRecorder extends Recorder {
     private String apiHost;
     
     /**
-		 * @return the apiHost
-		 */
-		public String getApiHost() {
-			return apiHost;
-		}
+         * @return the apiHost
+         */
+        public String getApiHost() {
+            return apiHost;
+        }
 
-		private Secret apiToken;
+        private Secret apiToken;
 
     @Deprecated
     public Secret getApiToken() {
@@ -49,7 +49,7 @@ public class TestflightRecorder extends Recorder {
     
     private boolean sslEnable;
     public boolean getSslEnable() {
-    	return sslEnable;
+        return sslEnable;
     }
 
     private Boolean notifyTeam;
@@ -61,29 +61,29 @@ public class TestflightRecorder extends Recorder {
     private String title;
 
     /**
-		 * @return the title
-		 */
-		public String getTitle() {
-			return title;
-		}
-		
+         * @return the title
+         */
+        public String getTitle() {
+            return title;
+        }
+        
     private String description;
 
     /**
-		 * @return the description
-		 */
-		public String getDescription() {
-			return description;
-		}
+         * @return the description
+         */
+        public String getDescription() {
+            return description;
+        }
 
-		private String tags;
+        private String tags;
 
-		/**
-		 * @return the tags
-		 */
-		public String getTags() {
-			return tags;
-		}
+        /**
+         * @return the tags
+         */
+        public String getTags() {
+            return tags;
+        }
 
     private boolean appendChangelog;
 
@@ -141,6 +141,12 @@ public class TestflightRecorder extends Recorder {
         return this.debug;
     }
 
+    private int timeout;
+    
+    public int getTimeout() {
+        return timeout;
+    }
+
     private TestflightTeam [] additionalTeams;
     
     public TestflightTeam [] getAdditionalTeams() {
@@ -148,7 +154,7 @@ public class TestflightRecorder extends Recorder {
     }
     
     @DataBoundConstructor
-    public TestflightRecorder(String hostTokenPairName, String apiHost, Secret apiToken, boolean sslEnable, Boolean notifyTeam, String title, String description, String tags, Boolean appendChangelog, String filePath, String dsymPath, String proxyHost, String proxyUser, String proxyPass, int proxyPort, Boolean debug, TestflightTeam [] additionalTeams) {
+    public TestflightRecorder(String hostTokenPairName, String apiHost, Secret apiToken, boolean sslEnable, Boolean notifyTeam, String title, String description, String tags, Boolean appendChangelog, String filePath, String dsymPath, String proxyHost, String proxyUser, String proxyPass, int proxyPort, int timeout, Boolean debug, TestflightTeam [] additionalTeams) {
         this.hostTokenPairName = hostTokenPairName;
         this.apiHost = apiHost;
         this.apiToken = apiToken;
@@ -164,6 +170,7 @@ public class TestflightRecorder extends Recorder {
         this.proxyUser = proxyUser;
         this.proxyPass = proxyPass;
         this.proxyPort = proxyPort;
+        this.timeout = timeout;
         this.debug = debug;
         this.additionalTeams = additionalTeams;
     }
@@ -287,6 +294,7 @@ public class TestflightRecorder extends Recorder {
         ur.proxyPort = proxy.port;
         ur.proxyUser = proxy.getUserName();
         ur.debug = debug;
+        ur.timeout = getTimeout();
         return ur;
     }
 
@@ -388,10 +396,10 @@ public class TestflightRecorder extends Recorder {
 
         @Override
         public boolean configure(StaplerRequest req, JSONObject json) throws FormException {
-        		if(((JSON)(json.get("hostTokenPair"))).isArray()){
-          		hostTokenPairs.replaceBy(req.bindJSONToList(HostTokenPair.class, json.getJSONArray("hostTokenPair")));
+                if(((JSON)(json.get("hostTokenPair"))).isArray()){
+                hostTokenPairs.replaceBy(req.bindJSONToList(HostTokenPair.class, json.getJSONArray("hostTokenPair")));
             } else {
-          		hostTokenPairs.replaceBy(req.bindJSONToList(HostTokenPair.class, json.getJSONObject("hostTokenPair")));
+                hostTokenPairs.replaceBy(req.bindJSONToList(HostTokenPair.class, json.getJSONObject("hostTokenPair")));
             }
             
             save();

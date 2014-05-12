@@ -33,6 +33,7 @@ public class TestflightUploaderMain {
         r.file = file;
         r.dsymFile = null;
         r.notifyTeam = true;
+        r.timeout = Integer.parseInt(args[6]);
 
         uploader.upload(r);
     }
