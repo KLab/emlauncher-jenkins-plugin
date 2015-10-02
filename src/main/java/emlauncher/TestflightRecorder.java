@@ -285,7 +285,9 @@ public class TestflightRecorder extends Recorder {
         ur.apiToken = vars.expand(Secret.toString(hostTokenPair.getApiToken()));
         ur.sslEnable = hostTokenPair.getSslEnable();
         ur.title = vars.expand(title);
-        ur.description = vars.expand(description);
+	// Add SCM change log to description. (if needed)
+        //ur.description = vars.expand(description);
+	ur.description = createDescription(vars.expand(description), build.getChangeSet());
         ur.tags = vars.expand(tags);
         ur.notifyTeam = notifyTeam;
         ProxyConfiguration proxy = getProxy();
@@ -312,12 +314,12 @@ public class TestflightRecorder extends Recorder {
     }
 
     // Append the changelog if we should and can
-    private String createBuildNotes(String buildNotes, final ChangeLogSet<?> changeSet) {
+    private String createDescription(String description, final ChangeLogSet<?> changeSet) {
         if (appendChangelog) {
             StringBuilder stringBuilder = new StringBuilder();
 
             // Show the build notes first
-            stringBuilder.append(buildNotes);
+            stringBuilder.append(description);
 
             // Then append the changelog
             stringBuilder.append("\n\n")
@@ -332,9 +334,9 @@ public class TestflightRecorder extends Recorder {
 
                 entryNumber++;
             }
-            buildNotes = stringBuilder.toString();
+            description = stringBuilder.toString();
         }
-        return buildNotes;
+        return description;
     }
 
     @Override

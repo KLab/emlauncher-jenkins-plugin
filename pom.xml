@@ -10,7 +10,7 @@
   <artifactId>EMLauncher</artifactId>
   <name>EMLauncher Plugin</name>
   <description>Uploads .ipa/.apk files to EMLauncher</description>
-  <version>1.3.10-SNAPSHOT</version>
+  <version>1.3.11-SNAPSHOT</version>
   <packaging>hpi</packaging>
 
   <!-- get every artifact through maven.glassfish.org, which proxies all the artifacts that we need -->
