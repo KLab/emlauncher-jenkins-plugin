@@ -20,7 +20,7 @@ import org.apache.commons.io.FilenameUtils;
 
 /**
  * Code for sending a build to TestFlight which can run on a master or slave.
- * <p/>
+ * <p>
  * When the ipa/apk file or optional dsym file are not specified, this class first tries to resolve their paths, searching them inside the workspace.
  */
 public class TestflightRemoteRecorder implements Callable<Object, Throwable>, Serializable {
