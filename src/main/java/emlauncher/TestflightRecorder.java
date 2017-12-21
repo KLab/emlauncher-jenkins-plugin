@@ -16,8 +16,12 @@ import org.apache.commons.collections.Predicate;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import hudson.model.Hudson;
+import org.jenkinsci.plugins.tokenmacro.MacroEvaluationException;
+import org.jenkinsci.plugins.tokenmacro.TokenMacro;
 
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import net.sf.json.JSON;
 import net.sf.json.JSONObject;
@@ -200,7 +204,7 @@ public class TestflightRecorder extends Recorder {
 
             for(TestflightTeam team : createDefaultPlusAdditionalTeams()) {
                 try {
-                    TestflightUploader.UploadRequest ur = createPartialUploadRequest(team, vars, build);
+                    TestflightUploader.UploadRequest ur = createPartialUploadRequest(team, vars, build, listener);
                     urList.add(ur);
                 } catch (MisconfiguredJobException mje) {
                     listener.getLogger().println(mje.getConfigurationMessage());
@@ -276,7 +280,7 @@ public class TestflightRecorder extends Recorder {
         }
     }
 
-    private TestflightUploader.UploadRequest createPartialUploadRequest(TestflightTeam team, EnvVars vars, AbstractBuild<?, ?> build) {
+    private TestflightUploader.UploadRequest createPartialUploadRequest(TestflightTeam team, EnvVars vars, AbstractBuild<?, ?> build, final BuildListener listener) {
         TestflightUploader.UploadRequest ur = new TestflightUploader.UploadRequest();
         HostTokenPair hostTokenPair = getHostTokenPair(team.getHostTokenPairName());
         ur.filePaths = vars.expand(StringUtils.trim(team.getFilePath()));
@@ -287,7 +291,7 @@ public class TestflightRecorder extends Recorder {
         ur.title = vars.expand(title);
 	// Add SCM change log to description. (if needed)
         //ur.description = vars.expand(description);
-	ur.description = createDescription(vars.expand(description), build.getChangeSet());
+	ur.description = createDescription(build, listener, vars.expand(description), build.getChangeSet());
         ur.tags = vars.expand(tags);
         ur.notifyTeam = notifyTeam;
         ProxyConfiguration proxy = getProxy();
@@ -314,7 +318,18 @@ public class TestflightRecorder extends Recorder {
     }
 
     // Append the changelog if we should and can
-    private String createDescription(String description, final ChangeLogSet<?> changeSet) {
+    private String createDescription(AbstractBuild<?, ?> build, final BuildListener listener, String description, final ChangeLogSet<?> changeSet) {
+
+        try {
+            description = TokenMacro.expandAll(build, listener, description);
+        }
+        catch ( MacroEvaluationException e )  {
+            listener.getLogger().println("Error evaluating token: " + e.getMessage());
+        }
+        catch ( Exception e ) {
+            Logger.getLogger(TestflightRecorder.class.getName()).log(Level.SEVERE, null, e);
+        }
+
         if (appendChangelog) {
             StringBuilder stringBuilder = new StringBuilder();
 
