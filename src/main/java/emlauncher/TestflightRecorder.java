@@ -1,11 +1,14 @@
 package emlauncher;
 
+import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.Extension;
+import hudson.FilePath;
 import hudson.Launcher;
 import hudson.ProxyConfiguration;
 import hudson.model.*;
 import hudson.model.AbstractBuild;
+import hudson.model.BuildListener;
 import hudson.scm.ChangeLogSet;
 import hudson.scm.ChangeLogSet.Entry;
 import hudson.tasks.*;
@@ -15,13 +18,17 @@ import hudson.util.Secret;
 import org.apache.commons.collections.Predicate;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 import hudson.model.Hudson;
 import org.jenkinsci.plugins.tokenmacro.MacroEvaluationException;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
+import org.jenkinsci.Symbol;
 
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.UUID;
+import java.io.IOException;
 
 import net.sf.json.JSON;
 import net.sf.json.JSONObject;
@@ -29,154 +36,213 @@ import org.apache.commons.collections.CollectionUtils;
 import org.kohsuke.stapler.StaplerRequest;
 
 public class TestflightRecorder extends Recorder {
-    private String hostTokenPairName;
+    private String hostTokenPairName = null;
 
     public String getHostTokenPairName() {
         return this.hostTokenPairName;
     }
+
+    @DataBoundSetter
+    public void setHostTokenPairName(String hostTokenPairName) {
+	this.hostTokenPairName = hostTokenPairName;
+    }
     
-    private String apiHost;
+    private String apiHost = null;
     
     /**
-         * @return the apiHost
-         */
-        public String getApiHost() {
-            return apiHost;
-        }
+     * @return the apiHost
+     */
+    public String getApiHost() {
+        return apiHost;
+    }
 
-        private Secret apiToken;
+    @DataBoundSetter
+    public void setApiHost(String apiHost) {
+	this.apiHost = apiHost;
+    }
+
+    private Secret apiToken = null;
 
     @Deprecated
     public Secret getApiToken() {
         return this.apiToken;
     }
+
+    @DataBoundSetter
+    public void setApiToken(Secret apiToken) {
+	this.apiToken = apiToken;
+    }
     
-    private boolean sslEnable;
+    private boolean sslEnable = false;
+
     public boolean getSslEnable() {
         return sslEnable;
     }
 
-    private Boolean notifyTeam;
+    @DataBoundSetter
+    public void setSslEnable(boolean sslEnable) {
+	this.sslEnable = sslEnable;
+    }
+
+    private Boolean notifyTeam = false;
 
     public Boolean getNotifyTeam() {
         return this.notifyTeam;
     }
 
-    private String title;
+    @DataBoundSetter
+    public void setNotifyTeam(boolean notifyTeam) {
+	this.notifyTeam = notifyTeam;
+    }
+
+    private String title = null;
 
     /**
-         * @return the title
-         */
-        public String getTitle() {
-            return title;
-        }
+     * @return the title
+     */
+    public String getTitle() {
+        return title;
+    }
+
+    @DataBoundSetter
+    public void setTitle(String title) {
+	this.title = title;
+    }
         
-    private String description;
+    private String description = null;
 
     /**
-         * @return the description
-         */
-        public String getDescription() {
-            return description;
-        }
+     * @return the description
+     */
+    public String getDescription() {
+        return description;
+    }
 
-        private String tags;
+    @DataBoundSetter
+    public void setDescription(String description) {
+	this.description = description;
+    }
 
-        /**
-         * @return the tags
-         */
-        public String getTags() {
-            return tags;
-        }
+    private String tags = null;
 
-    private boolean appendChangelog;
+    /**
+     * @return the tags
+     */
+    public String getTags() {
+        return tags;
+    }
+
+    @DataBoundSetter
+    public void setTags(String tags) {
+	this.tags = tags;
+    }
+
+    private boolean appendChangelog = false;
 
     public boolean getAppendChangelog() {
         return this.appendChangelog;
+    }
+
+    @DataBoundSetter
+    public void setAppendChangelog(boolean appendChangelog) {
+	this.appendChangelog = appendChangelog;
     }
 
     /**
      * Comma- or space-separated list of patterns of files/directories to be archived.
      * The variable hasn't been renamed yet for compatibility reasons
      */
-    private String filePath;
+    private String filePath = null;
 
     public String getFilePath() {
         return this.filePath;
     }
 
-    private String dsymPath;
+    @DataBoundSetter
+    public void setFilePath(String filePath) {
+	this.filePath = filePath;
+    }
+
+    private String dsymPath = null;
 
     public String getDsymPath() {
         return this.dsymPath;
     }
 
-    private String proxyHost;
+    @DataBoundSetter
+    public void setDsymPath(String dsymPath) {
+	this.dsymPath = dsymPath;
+    }
+
+    private String proxyHost = null;
 
     @Deprecated
     public String getProxyHost() {
         return proxyHost;
     }
 
-    private String proxyUser;
+    private String proxyUser = null;
 
     @Deprecated
     public String getProxyUser() {
         return proxyUser;
     }
 
-    private String proxyPass;
+    private String proxyPass = null;
 
     @Deprecated
     public String getProxyPass() {
         return proxyPass;
     }
 
-    private int proxyPort;
+    private int proxyPort = 0;
 
     @Deprecated
     public int getProxyPort() {
         return proxyPort;
     }
 
-    private Boolean debug;
+    private Boolean debug = false;
 
     public Boolean getDebug() {
         return this.debug;
     }
 
-    private int timeout;
+    @DataBoundSetter
+    public void setDebug(boolean debug) {
+	this.debug = debug;
+    }
+
+    private int timeout = 0;
     
     public int getTimeout() {
         return timeout;
     }
 
-    private TestflightTeam [] additionalTeams;
+    @DataBoundSetter
+    public void setTimeout(int timeout) {
+	this.timeout = timeout;
+    }
+
+    private TestflightTeam [] additionalTeams = null;
     
     public TestflightTeam [] getAdditionalTeams() {
         return this.additionalTeams;
     }
-    
+
+    @DataBoundSetter
+    public void setAdditionalTeams(TestflightTeam [] additionalTeams) {
+	this.additionalTeams = additionalTeams;
+    }
+
     @DataBoundConstructor
-    public TestflightRecorder(String hostTokenPairName, String apiHost, Secret apiToken, boolean sslEnable, Boolean notifyTeam, String title, String description, String tags, Boolean appendChangelog, String filePath, String dsymPath, String proxyHost, String proxyUser, String proxyPass, int proxyPort, int timeout, Boolean debug, TestflightTeam [] additionalTeams) {
+    public TestflightRecorder(String hostTokenPairName) {
         this.hostTokenPairName = hostTokenPairName;
-        this.apiHost = apiHost;
-        this.apiToken = apiToken;
-        this.sslEnable = sslEnable;
-        this.notifyTeam = notifyTeam;
-        this.title = title;
-        this.description = description;
-        this.tags = tags;
-        this.appendChangelog = appendChangelog;
-        this.filePath = filePath;
-        this.dsymPath = dsymPath;
-        this.proxyHost = proxyHost;
-        this.proxyUser = proxyUser;
-        this.proxyPass = proxyPass;
-        this.proxyPort = proxyPort;
-        this.timeout = timeout;
-        this.debug = debug;
-        this.additionalTeams = additionalTeams;
+    }
+    
+    @Deprecated
+    public TestflightRecorder(String hostTokenPairName, String apiHost, Secret apiToken, boolean sslEnable, Boolean notifyTeam, String title, String description, String tags, Boolean appendChangelog, String filePath, String dsymPath, String proxyHost, String proxyUser, String proxyPass, int proxyPort, int timeout, Boolean debug, TestflightTeam [] additionalTeams) {
+	this(hostTokenPairName);
     }
 
     @Override
@@ -190,6 +256,7 @@ public class TestflightRecorder extends Recorder {
 
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, final BuildListener listener) {
+	listener.getLogger().println("perform()");
         if (build.getResult().isWorseOrEqualTo(Result.FAILURE))
             return false;
 
@@ -398,6 +465,7 @@ public class TestflightRecorder extends Recorder {
     }
 
     @Extension // This indicates to Jenkins that this is an implementation of an extension point.
+    @Symbol("emlauncherUploader")
     public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
         private final CopyOnWriteList<HostTokenPair> hostTokenPairs = new CopyOnWriteList<HostTokenPair>();
 
@@ -432,6 +500,10 @@ public class TestflightRecorder extends Recorder {
 
         public Iterable<HostTokenPair> getHostTokenPairs() {
             return hostTokenPairs;
+        }
+
+        public String getUUID() {
+            return "" + UUID.randomUUID().getMostSignificantBits();
         }
     }
 

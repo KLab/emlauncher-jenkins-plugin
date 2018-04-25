@@ -3,6 +3,8 @@ package emlauncher;
 import hudson.model.BuildListener;
 import hudson.remoting.Callable;
 import hudson.Util;
+import jenkins.security.Roles;
+import org.jenkinsci.remoting.RoleChecker;
 
 import java.io.File;
 import java.io.Serializable;
@@ -27,6 +29,11 @@ public class TestflightRemoteRecorder implements Callable<Object, Throwable>, Se
     final private String remoteWorkspace;
     final private TestflightUploader.UploadRequest uploadRequest;
     final private BuildListener listener;
+
+    @Override
+    public void checkRoles(RoleChecker checker) throws SecurityException {
+        checker.check(this,Roles.SLAVE);
+    }
 
     public TestflightRemoteRecorder(String remoteWorkspace, TestflightUploader.UploadRequest uploadRequest, BuildListener listener) {
         this.remoteWorkspace = remoteWorkspace;

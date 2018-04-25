@@ -11,3 +11,6 @@ Need Maven, JDK
 In Jenkins General Settings, Setting EMLauncher Server configuration.
 And In your Build configuration, Add EMLauncher Plugin to post build process and set some parameter.
 
+Additional Furture
+
+${ENV ,var="description"}
