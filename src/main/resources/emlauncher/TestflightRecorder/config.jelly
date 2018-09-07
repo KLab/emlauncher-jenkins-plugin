@@ -24,8 +24,8 @@
         ]]>
 
   <j:set var="UUID" value="${descriptor.UUID}" />
-  <f:entry title="Host Token Pair" field="hostTokenPairName">
-    <select class="setting-input" name="hostTokenPairName" id="hosttokenpair-select-${UUID}" onchange="showOrHideAttributeInput('hosttokenpair-select-', '${UUID}')" description="Select EMLauncher token pair. These are configured globally.">
+  <f:entry title="${%Host Token Pair}" field="hostTokenPairName">
+    <select class="setting-input" name="hostTokenPairName" id="hosttokenpair-select-${UUID}" onchange="showOrHideAttributeInput('hosttokenpair-select-', '${UUID}')" description="${%Select EMLauncher token pair. These are configured globally.}">
       <f:option selected="${instance.hostTokenPairName==null}" value="">none (specify one below)</f:option>
       <j:forEach var="hostTokenPair" items="${descriptor.hostTokenPairs}">
         <j:if test="${hostTokenPair.hostTokenPairName==instance.hostTokenPairName}">
@@ -40,39 +40,39 @@
       </j:if>
 
       <table id="${UUID}" style="display: ${displayHostTokenPair}">
-        <f:entry title="${%API Host}" field="apiHost" description="The Hostname or IP address of the EMlauncher server to upload IPA.">
+        <f:entry title="${%API Host}" field="apiHost" description="${%The Hostname or IP address of the EMlauncher server to upload IPA.}">
           <f:textbox />
         </f:entry>
-        <f:entry title="${%API Token}" field="apiToken" description="The API token of the EMlauncher server to upload IPA.">
+        <f:entry title="${%API Token}" field="apiToken" description="${%The API token of the EMlauncher server to upload IPA.}">
           <f:textbox />
         </f:entry>
-        <f:entry title="${%Enable SSL}" field="sslEnable" checked="${instance.sslEnable}" description="Enable SSL when uploading files to EMlauncher Server.">
+        <f:entry title="${%Enable SSL}" field="sslEnable" checked="${instance.sslEnable}" description="${%Enable SSL when uploading files to EMlauncher Server.}">
           <f:checkbox />
         </f:entry>
       </table>
     </f:nested>
   </f:entry>
 
-  <f:entry title="IPA/APK Files (optional)" field="filePath">
+  <f:entry title="${%IPA/APK Files} (${%optional})" field="filePath">
     <f:textbox />
   </f:entry>
-  <f:entry title="dSYM File (optional)" field="dsymPath">
+  <f:entry title="${%dSYM File} (${%optional})" field="dsymPath">
     <f:textbox />
   </f:entry>
-  <f:entry title="Additional Uploads" help="/descriptor/emlauncher.TestflightRecorder/help/additionalTeams">
+  <f:entry title="${%Additional Uploads}" help="/descriptor/emlauncher.TestflightRecorder/help/additionalTeams">
     <f:repeatable name="additionalTeams" var="additionalTeam" items="${instance.additionalTeams}">
       <table width="100%">
-        <f:entry title="Host Token Pair">
-          <select class="setting-input" name="hostTokenPairName" description="Select EMLauncher host token pair. These are configured globally.">
+        <f:entry title="${%Host Token Pair}">
+          <select class="setting-input" name="hostTokenPairName" description="${%Select EMLauncher host token pair. These are configured globally.}">
             <j:forEach var="hostTokenPair" items="${descriptor.hostTokenPairs}">
               <f:option selected="${hostTokenPair.hostTokenPairName==additionalTeam.hostTokenPairName}">${hostTokenPair.hostTokenPairName}</f:option>
             </j:forEach>
           </select>
         </f:entry>
-        <f:entry title="IPA/APK Files (optional)" field="filePath">
+        <f:entry title="${%IPA/APK Files} (${%optional})" field="filePath">
           <f:textbox value="${additionalTeam.filePath}"/>
         </f:entry>
-        <f:entry title="dSYM File (optional)" field="dsymPath">
+        <f:entry title="${%dSYM File} (${%optional})" field="dsymPath">
           <f:textbox value="${additionalTeam.dsymPath}"/>
         </f:entry>
        <f:entry title="">
@@ -83,28 +83,28 @@
       </table>
     </f:repeatable>
   </f:entry>      
-  <f:entry title="Title" field="title">
+  <f:entry title="${%Title}" field="title">
     <f:textarea />
   </f:entry>
-  <f:entry title="Description (Optional)" field="description">
+  <f:entry title="${%Description} (${%Optional})" field="description">
     <f:textarea />
   </f:entry>
-  <f:entry title="Tags (Optional)" field="tags">
+  <f:entry title="${%Tags} (${%Optional})" field="tags">
     <f:textarea />
   </f:entry>
-  <f:entry title="Append changelog to build notes" field="appendChangelog">
+  <f:entry title="${%Append changelog to build notes}" field="appendChangelog">
     <f:checkbox />
   </f:entry>
   <f:advanced>
-    <f:entry title="Notify Team" field="notifyTeam">
+    <f:entry title="${%Notify Team}" field="notifyTeam">
         <f:checkbox />
     </f:entry>
 
-    <f:entry title="Debug Upload" field="debug">
+    <f:entry title="${%Debug Upload}" field="debug">
         <f:checkbox />
     </f:entry>
 
-    <f:entry title="Connection Timeout (ms)" field="timeout">
+    <f:entry title="${%Connection Timeout} (ms)" field="timeout">
       <f:textbox default="600000" />
     </f:entry>
   </f:advanced>

@@ -1,6 +1,6 @@
 package emlauncher;
 
-import hudson.model.BuildListener;
+import hudson.model.TaskListener;
 import hudson.remoting.Callable;
 import hudson.Util;
 import jenkins.security.Roles;
@@ -20,28 +20,31 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.tools.ant.types.FileSet;
 import org.apache.commons.io.FilenameUtils;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 /**
  * Code for sending a build to TestFlight which can run on a master or slave.
  * <p>
  * When the ipa/apk file or optional dsym file are not specified, this class first tries to resolve their paths, searching them inside the workspace.
  */
-public class TestflightRemoteRecorder implements Callable<Object, Throwable>, Serializable {
+public class TestflightRemoteRecorder implements Callable<String, Throwable>, Serializable {
     final private String remoteWorkspace;
     final private TestflightUploader.UploadRequest uploadRequest;
-    final private BuildListener listener;
+    final private TaskListener listener;
 
     @Override
     public void checkRoles(RoleChecker checker) throws SecurityException {
-        checker.check(this,Roles.SLAVE);
+        checker.check(this, Roles.SLAVE);
     }
 
-    public TestflightRemoteRecorder(String remoteWorkspace, TestflightUploader.UploadRequest uploadRequest, BuildListener listener) {
+    public TestflightRemoteRecorder(String remoteWorkspace, TestflightUploader.UploadRequest uploadRequest, TaskListener listener) {
         this.remoteWorkspace = remoteWorkspace;
         this.uploadRequest = uploadRequest;
         this.listener = listener;
     }
 
-    public Object call() throws Throwable {
+    public String call() throws Throwable {
         TestflightUploader uploader = new TestflightUploader();
         if (uploadRequest.debug != null && uploadRequest.debug) {
             uploader.setLogger(new TestflightUploader.Logger() {
@@ -50,7 +53,10 @@ public class TestflightRemoteRecorder implements Callable<Object, Throwable>, Se
                 }
             });
         }
-        return uploadWith(uploader);
+	List<Map> results = uploadWith(uploader);
+	ObjectMapper mapper = new ObjectMapper();
+	String jsonString = mapper.writeValueAsString(results);
+        return jsonString;
     }
 
     List<Map> uploadWith(TestflightUploader uploader) throws Throwable {
@@ -156,7 +162,7 @@ public class TestflightRemoteRecorder implements Callable<Object, Throwable>, Se
     }
 
     /*
-      * Finds a file that is absolute or relative to either the current direectory or the remoteWorkspace
+     * Finds a file that is absolute or relative to either the current direectory or the remoteWorkspace
      */
     private File findAbsoluteOrRelativeFile(String path) {
         File f = new File(path);

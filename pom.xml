@@ -55,6 +55,11 @@
       <artifactId>token-macro</artifactId>
       <version>2.0</version>
     </dependency>
+<dependency>
+    <groupId>org.jenkins-ci.plugins.workflow</groupId>
+    <artifactId>workflow-job</artifactId>
+    <version>2.1</version>
+</dependency>
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpclient</artifactId>
@@ -97,6 +102,16 @@
       <groupId>org.jenkins-ci.plugins</groupId>
       <artifactId>structs</artifactId>
       <version>1.10</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-core</artifactId>
+      <version>2.9.6</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>2.9.6</version>
     </dependency>
   </dependencies>      
 
