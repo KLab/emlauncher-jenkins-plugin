@@ -20,3 +20,22 @@ And In your Build configuration, Add EMLauncher Plugin to post build process and
 - Added macro expansion by "TokenMacro" to description sent to EMlauncher.
  Like:
     ${ENV ,var="description"}
+
+## Example Pipeline script
+```
+BUILD_TARGET = "TestApp"
+OUTPUT_FILE_NAME = "${BUILD_TARGET}.ipa"
+
+stage('upload') {
+    // Upload IPA to a test site such as TestFlight.
+    emlauncherUploader(
+        hostTokenPairName: 'Sandbox',
+        filePath: "build/Release-iphoneos/AdHoc/${OUTPUT_FILE_NAME}",
+        dsymPath: "build/Release-iphoneos/AdHoc/${BUILD_TARGET}-dSYM.zip",
+        title: 'My test app',
+        description: 'Jenkins pipelineビルド',
+        tags: 'test pipline jenkins',
+        appendChangelog: true
+    )
+}
+```
