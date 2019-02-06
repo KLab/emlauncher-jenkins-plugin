@@ -58,7 +58,7 @@ public class HostTokenPair {
 		}
 
 		/**
-		 * @param ssl the ssl to set
+		 * @param sslEnable the ssl to set
 		 */
 		public void setSslEnable(boolean sslEnable) {
 			this.sslEnable = sslEnable;

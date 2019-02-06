@@ -1,19 +1,20 @@
+<?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
   <!-- nothing to configure -->
-  <f:section title="EMLauncher">
-    <f:entry title="EMLauncher Tokens" description="Host and Token configurations for uploading to EMLauncher">
+  <f:section title="${%EMLauncher}">
+    <f:entry title="${%EMLauncher Tokens}" description="${%Host and Token configurations for uploading to EMLauncher}">
       <f:repeatable var="hostTokenPair" items="${descriptor.hostTokenPairs}">
         <table width="100%">
-          <f:entry title="Host Token Pair Name" field="hostTokenPairName">
+          <f:entry title="${%Host Token Pair Name}" field="hostTokenPairName">
             <f:textbox name="hostTokenPair.hostTokenPairName" value="${hostTokenPair.hostTokenPairName}" />
           </f:entry>
-          <f:entry title="API Host" field="apiHost">
+          <f:entry title="${%API Host}" field="apiHost">
             <f:textbox name="hostTokenPair.apiHost" value="${hostTokenPair.apiHost}" />
           </f:entry>
-          <f:entry title="API Token" field="apiToken">
+          <f:entry title="${%API Token}" field="apiToken">
             <f:password name="hostTokenPair.apiToken" value="${hostTokenPair.apiToken}" />
           </f:entry>
-          <f:entry title="Enable SSL" field="sslEnable">
+          <f:entry title="${%Enable SSL}" field="sslEnable">
             <f:checkbox name="hostTokenPair.sslEnable" checked="${hostTokenPair.sslEnable}" value="${hostTokenPair.sslEnable}"/>
           </f:entry>
           <f:entry title="">

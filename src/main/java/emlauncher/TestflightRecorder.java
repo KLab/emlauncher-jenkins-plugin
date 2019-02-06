@@ -1,11 +1,14 @@
 package emlauncher;
 
+import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.Extension;
+import hudson.FilePath;
 import hudson.Launcher;
 import hudson.ProxyConfiguration;
 import hudson.model.*;
 import hudson.model.AbstractBuild;
+import hudson.model.TaskListener;
 import hudson.scm.ChangeLogSet;
 import hudson.scm.ChangeLogSet.Entry;
 import hudson.tasks.*;
@@ -15,164 +18,237 @@ import hudson.util.Secret;
 import org.apache.commons.collections.Predicate;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 import hudson.model.Hudson;
+import org.jenkinsci.plugins.tokenmacro.MacroEvaluationException;
+import org.jenkinsci.plugins.tokenmacro.TokenMacro;
+import org.jenkinsci.Symbol;
+import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+import jenkins.tasks.SimpleBuildStep;
 
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.UUID;
+import javax.annotation.Nonnull;
+import java.io.IOException;
 
 import net.sf.json.JSON;
 import net.sf.json.JSONObject;
 import org.apache.commons.collections.CollectionUtils;
 import org.kohsuke.stapler.StaplerRequest;
 
-public class TestflightRecorder extends Recorder {
-    private String hostTokenPairName;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
+
+public class TestflightRecorder extends Recorder implements SimpleBuildStep {
+    private String hostTokenPairName = null;
 
     public String getHostTokenPairName() {
         return this.hostTokenPairName;
     }
+
+    @DataBoundSetter
+    public void setHostTokenPairName(String hostTokenPairName) {
+	this.hostTokenPairName = hostTokenPairName;
+    }
     
-    private String apiHost;
+    private String apiHost = null;
     
     /**
-         * @return the apiHost
-         */
-        public String getApiHost() {
-            return apiHost;
-        }
+     * @return the apiHost
+     */
+    public String getApiHost() {
+        return apiHost;
+    }
 
-        private Secret apiToken;
+    @DataBoundSetter
+    public void setApiHost(String apiHost) {
+	this.apiHost = apiHost;
+    }
+
+    private Secret apiToken = null;
 
     @Deprecated
     public Secret getApiToken() {
         return this.apiToken;
     }
+
+    @DataBoundSetter
+    public void setApiToken(Secret apiToken) {
+	this.apiToken = apiToken;
+    }
     
-    private boolean sslEnable;
+    private boolean sslEnable = false;
+
     public boolean getSslEnable() {
         return sslEnable;
     }
 
-    private Boolean notifyTeam;
+    @DataBoundSetter
+    public void setSslEnable(boolean sslEnable) {
+	this.sslEnable = sslEnable;
+    }
+
+    private Boolean notifyTeam = false;
 
     public Boolean getNotifyTeam() {
         return this.notifyTeam;
     }
 
-    private String title;
+    @DataBoundSetter
+    public void setNotifyTeam(boolean notifyTeam) {
+	this.notifyTeam = notifyTeam;
+    }
+
+    private String title = null;
 
     /**
-         * @return the title
-         */
-        public String getTitle() {
-            return title;
-        }
+     * @return the title
+     */
+    public String getTitle() {
+        return title;
+    }
+
+    @DataBoundSetter
+    public void setTitle(String title) {
+	this.title = title;
+    }
         
-    private String description;
+    private String description = null;
 
     /**
-         * @return the description
-         */
-        public String getDescription() {
-            return description;
-        }
+     * @return the description
+     */
+    public String getDescription() {
+        return description;
+    }
 
-        private String tags;
+    @DataBoundSetter
+    public void setDescription(String description) {
+	this.description = description;
+    }
 
-        /**
-         * @return the tags
-         */
-        public String getTags() {
-            return tags;
-        }
+    private String tags = null;
 
-    private boolean appendChangelog;
+    /**
+     * @return the tags
+     */
+    public String getTags() {
+        return tags;
+    }
+
+    @DataBoundSetter
+    public void setTags(String tags) {
+	this.tags = tags;
+    }
+
+    private boolean appendChangelog = false;
 
     public boolean getAppendChangelog() {
         return this.appendChangelog;
+    }
+
+    @DataBoundSetter
+    public void setAppendChangelog(boolean appendChangelog) {
+	this.appendChangelog = appendChangelog;
     }
 
     /**
      * Comma- or space-separated list of patterns of files/directories to be archived.
      * The variable hasn't been renamed yet for compatibility reasons
      */
-    private String filePath;
+    private String filePath = null;
 
     public String getFilePath() {
         return this.filePath;
     }
 
-    private String dsymPath;
+    @DataBoundSetter
+    public void setFilePath(String filePath) {
+	this.filePath = filePath;
+    }
+
+    private String dsymPath = null;
 
     public String getDsymPath() {
         return this.dsymPath;
     }
 
-    private String proxyHost;
+    @DataBoundSetter
+    public void setDsymPath(String dsymPath) {
+	this.dsymPath = dsymPath;
+    }
+
+    private String proxyHost = null;
 
     @Deprecated
     public String getProxyHost() {
         return proxyHost;
     }
 
-    private String proxyUser;
+    private String proxyUser = null;
 
     @Deprecated
     public String getProxyUser() {
         return proxyUser;
     }
 
-    private String proxyPass;
+    private String proxyPass = null;
 
     @Deprecated
     public String getProxyPass() {
         return proxyPass;
     }
 
-    private int proxyPort;
+    private int proxyPort = 0;
 
     @Deprecated
     public int getProxyPort() {
         return proxyPort;
     }
 
-    private Boolean debug;
+    private Boolean debug = false;
 
     public Boolean getDebug() {
         return this.debug;
     }
 
-    private int timeout;
+    @DataBoundSetter
+    public void setDebug(boolean debug) {
+	this.debug = debug;
+    }
+
+    private int timeout = 0;
     
     public int getTimeout() {
         return timeout;
     }
 
-    private TestflightTeam [] additionalTeams;
+    @DataBoundSetter
+    public void setTimeout(int timeout) {
+	this.timeout = timeout;
+    }
+
+    private TestflightTeam [] additionalTeams = null;
     
     public TestflightTeam [] getAdditionalTeams() {
         return this.additionalTeams;
     }
-    
+
+    @DataBoundSetter
+    public void setAdditionalTeams(TestflightTeam [] additionalTeams) {
+	this.additionalTeams = additionalTeams;
+    }
+
     @DataBoundConstructor
-    public TestflightRecorder(String hostTokenPairName, String apiHost, Secret apiToken, boolean sslEnable, Boolean notifyTeam, String title, String description, String tags, Boolean appendChangelog, String filePath, String dsymPath, String proxyHost, String proxyUser, String proxyPass, int proxyPort, int timeout, Boolean debug, TestflightTeam [] additionalTeams) {
+    public TestflightRecorder(String hostTokenPairName) {
         this.hostTokenPairName = hostTokenPairName;
-        this.apiHost = apiHost;
-        this.apiToken = apiToken;
-        this.sslEnable = sslEnable;
-        this.notifyTeam = notifyTeam;
-        this.title = title;
-        this.description = description;
-        this.tags = tags;
-        this.appendChangelog = appendChangelog;
-        this.filePath = filePath;
-        this.dsymPath = dsymPath;
-        this.proxyHost = proxyHost;
-        this.proxyUser = proxyUser;
-        this.proxyPass = proxyPass;
-        this.proxyPort = proxyPort;
-        this.timeout = timeout;
-        this.debug = debug;
-        this.additionalTeams = additionalTeams;
+    }
+    
+    @Deprecated
+    public TestflightRecorder(String hostTokenPairName, String apiHost, Secret apiToken, boolean sslEnable, Boolean notifyTeam, String title, String description, String tags, Boolean appendChangelog, String filePath, String dsymPath, String proxyHost, String proxyUser, String proxyPass, int proxyPort, int timeout, Boolean debug, TestflightTeam [] additionalTeams) {
+	this(hostTokenPairName);
     }
 
     @Override
@@ -185,22 +261,21 @@ public class TestflightRecorder extends Recorder {
     }
 
     @Override
-    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, final BuildListener listener) {
-        if (build.getResult().isWorseOrEqualTo(Result.FAILURE))
-            return false;
+    public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws InterruptedException, IOException {
+	_perform(run, workspace, launcher, listener);
+    }
 
+    public boolean _perform(Run<?, ?> build, FilePath workspace, Launcher launcher, final TaskListener listener) {
         listener.getLogger().println(Messages.TestflightRecorder_InfoUploading());
 
         try {
             EnvVars vars = build.getEnvironment(listener);
 
-            String workspace = vars.expand("$WORKSPACE");
-
             List<TestflightUploader.UploadRequest> urList = new ArrayList<TestflightUploader.UploadRequest>();
 
             for(TestflightTeam team : createDefaultPlusAdditionalTeams()) {
                 try {
-                    TestflightUploader.UploadRequest ur = createPartialUploadRequest(team, vars, build);
+                    TestflightUploader.UploadRequest ur = createPartialUploadRequest(team, vars, build, listener);
                     urList.add(ur);
                 } catch (MisconfiguredJobException mje) {
                     listener.getLogger().println(mje.getConfigurationMessage());
@@ -209,13 +284,14 @@ public class TestflightRecorder extends Recorder {
             }
 
             for(TestflightUploader.UploadRequest ur : urList) {
-                TestflightRemoteRecorder remoteRecorder = new TestflightRemoteRecorder(workspace, ur, listener);
+                TestflightRemoteRecorder remoteRecorder = new TestflightRemoteRecorder(workspace.absolutize().getRemote(), ur, listener);
     
                 final List<Map> parsedMaps;
     
                 try {
-                    Object result = launcher.getChannel().call(remoteRecorder);
-                    parsedMaps = (List<Map>) result;
+                    String result = launcher.getChannel().call(remoteRecorder);
+		    ObjectMapper mapper = new ObjectMapper();
+                    parsedMaps = mapper.readValue(result, new TypeReference<List<Map>>() {});
                 } catch (UploadException ue) {
                     listener.getLogger().println(Messages.TestflightRecorder_IncorrectResponseCode(ue.getStatusCode()));
                     listener.getLogger().println(ue.getResponseBody());
@@ -249,7 +325,7 @@ public class TestflightRecorder extends Recorder {
         return allTeams;
     }
 
-    private void addTestflightLinks(AbstractBuild<?, ?> build, BuildListener listener, Map parsedMap) {
+    private void addTestflightLinks(Run<?, ?> build, TaskListener listener, Map parsedMap) {
         TestflightBuildAction installAction = new TestflightBuildAction();
         String installUrl = (String) parsedMap.get("package_url");
         installAction.displayName = Messages.TestflightRecorder_InstallLinkText();
@@ -276,7 +352,7 @@ public class TestflightRecorder extends Recorder {
         }
     }
 
-    private TestflightUploader.UploadRequest createPartialUploadRequest(TestflightTeam team, EnvVars vars, AbstractBuild<?, ?> build) {
+    private TestflightUploader.UploadRequest createPartialUploadRequest(TestflightTeam team, EnvVars vars, Run<?, ?> build, final TaskListener listener) {
         TestflightUploader.UploadRequest ur = new TestflightUploader.UploadRequest();
         HostTokenPair hostTokenPair = getHostTokenPair(team.getHostTokenPairName());
         ur.filePaths = vars.expand(StringUtils.trim(team.getFilePath()));
@@ -285,7 +361,29 @@ public class TestflightRecorder extends Recorder {
         ur.apiToken = vars.expand(Secret.toString(hostTokenPair.getApiToken()));
         ur.sslEnable = hostTokenPair.getSslEnable();
         ur.title = vars.expand(title);
-        ur.description = vars.expand(description);
+	// Add SCM change log to description. (if needed)
+	List<ChangeLogSet> changeSets = new ArrayList<ChangeLogSet>();
+	try {
+	    if ( build instanceof WorkflowRun ) {
+		changeSets = (List<ChangeLogSet>)build.getClass().getMethod("getChangeSets").invoke(build);
+	    }
+	    else if ( build instanceof AbstractBuild ) {
+		changeSets.add((ChangeLogSet)build.getClass().getMethod("getChangeSet").invoke(build));
+	    }
+	    else {
+		listener.getLogger().println(Messages.TestflightRecorder_UnknownClassInstance(build.getClass().getName()));
+	    }
+	}
+	catch (java.lang.reflect.InvocationTargetException ex) {
+	    listener.getLogger().println("InvocationTargetException");
+	}
+	catch (java.lang.IllegalAccessException ex) {
+	    listener.getLogger().println("IllegalAccessException");
+	}
+	catch (NoSuchMethodException ex) {
+	    listener.getLogger().println("NoSuchMethodException");
+	}
+	ur.description = createDescription(build, listener, vars.expand(description), changeSets);
         ur.tags = vars.expand(tags);
         ur.notifyTeam = notifyTeam;
         ProxyConfiguration proxy = getProxy();
@@ -312,49 +410,63 @@ public class TestflightRecorder extends Recorder {
     }
 
     // Append the changelog if we should and can
-    private String createBuildNotes(String buildNotes, final ChangeLogSet<?> changeSet) {
-        if (appendChangelog) {
+    private String createDescription(Run<?, ?> build, final TaskListener listener, String description, final List<ChangeLogSet> changeSets) {
+
+        try {
+            description = TokenMacro.expandAll((AbstractBuild)build, listener, description);
+        }
+        catch ( MacroEvaluationException e )  {
+            listener.getLogger().println("Error evaluating token: " + e.getMessage());
+        }
+        catch ( Exception e ) {
+            Logger.getLogger(TestflightRecorder.class.getName()).log(Level.SEVERE, null, e);
+        }
+
+        if ( appendChangelog ) {
             StringBuilder stringBuilder = new StringBuilder();
 
             // Show the build notes first
-            stringBuilder.append(buildNotes);
+            stringBuilder.append(description);
 
             // Then append the changelog
-            stringBuilder.append("\n\n")
-                    .append(changeSet.isEmptySet() ? Messages.TestflightRecorder_EmptyChangeSet() : Messages.TestflightRecorder_Changelog())
-                    .append("\n");
-
-            int entryNumber = 1;
-
-            for (Entry entry : changeSet) {
-                stringBuilder.append("\n").append(entryNumber).append(". ");
-                stringBuilder.append(entry.getMsg()).append(" \u2014 ").append(entry.getAuthor());
-
-                entryNumber++;
-            }
-            buildNotes = stringBuilder.toString();
+            stringBuilder.append("\n\n");
+	    if ( changeSets.size() < 1 ) {
+		stringBuilder.append(Messages.TestflightRecorder_EmptyChangeSet()).append("\n");
+	    }
+	    else {
+		stringBuilder.append(Messages.TestflightRecorder_Changelog()).append("\n");
+		int entryNumber = 1;
+		for ( ChangeLogSet<?> changeSet : changeSets ) {
+		for ( Entry entry : changeSet ) {
+		    stringBuilder.append("\n").append(entryNumber).append(". ");
+		    stringBuilder.append(entry.getMsg()).append(" \u2014 ").append(entry.getAuthor());
+		    entryNumber++;
+		}
+		}
+	    }
+            description = stringBuilder.toString();
         }
-        return buildNotes;
+        return description;
     }
 
-    @Override
-    public Collection<? extends Action> getProjectActions(AbstractProject<?, ?> project) {
+/*
+    public Collection<? extends Action> getProjectActions(Run<?, ?> project) {
         ArrayList<TestflightBuildAction> actions = new ArrayList<TestflightBuildAction>();
-        RunList<? extends AbstractBuild<?, ?>> builds = project.getBuilds();
+        RunList<? extends Run<?, ?>> builds = (AbstractBuild)project.getBuilds();
 
         Collection predicated = CollectionUtils.select(builds, new Predicate() {
             public boolean evaluate(Object o) {
-                Result result = ((AbstractBuild<?, ?>) o).getResult();
+                Result result = ((Run<?, ?>) o).getResult();
                 if (result == null) return false; // currently running builds can have a null result
                 return result.isBetterOrEqualTo(Result.SUCCESS);
             }
         });
 
-        ArrayList<AbstractBuild<?, ?>> filteredList = new ArrayList<AbstractBuild<?, ?>>(predicated);
+        ArrayList<Run<?, ?>> filteredList = new ArrayList<Run<?, ?>>(predicated);
 
 
         Collections.reverse(filteredList);
-        for (AbstractBuild<?, ?> build : filteredList) {
+        for (Run<?, ?> build : filteredList) {
             List<TestflightBuildAction> testflightActions = build.getActions(TestflightBuildAction.class);
             if (testflightActions != null && testflightActions.size() > 0) {
                 for (TestflightBuildAction action : testflightActions) {
@@ -366,6 +478,7 @@ public class TestflightRecorder extends Recorder {
 
         return actions;
     }
+*/
 
     private HostTokenPair getHostTokenPair(String hostTokenPairName) {
         for (HostTokenPair hostTokenPair : getDescriptor().getHostTokenPairs()) {
@@ -381,6 +494,7 @@ public class TestflightRecorder extends Recorder {
     }
 
     @Extension // This indicates to Jenkins that this is an implementation of an extension point.
+    @Symbol("emlauncherUploader")
     public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
         private final CopyOnWriteList<HostTokenPair> hostTokenPairs = new CopyOnWriteList<HostTokenPair>();
 
@@ -389,7 +503,7 @@ public class TestflightRecorder extends Recorder {
             load();
         }
 
-        public boolean isApplicable(Class<? extends AbstractProject> aClass) {
+        public boolean isApplicable(Class<? extends AbstractProject> c) {
             // Indicates that this builder can be used with all kinds of project types
             return true;
         }
@@ -415,6 +529,10 @@ public class TestflightRecorder extends Recorder {
 
         public Iterable<HostTokenPair> getHostTokenPairs() {
             return hostTokenPairs;
+        }
+
+        public String getUUID() {
+            return "" + UUID.randomUUID().getMostSignificantBits();
         }
     }
 
