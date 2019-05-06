@@ -4,22 +4,37 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 public class TestflightTeam {
 
+    private String emlauncherCredentialId;
+    @Deprecated
     private String hostTokenPairName;
     private String filePath;
     private String dsymPath;
 
     @DataBoundConstructor
-    public TestflightTeam(String hostTokenPairName, String filePath, String dsymPath) {
+    public TestflightTeam(String hostTokenPairNameOrCredentialId, String filePath, String dsymPath, boolean isCredential) {
         super();
-        this.hostTokenPairName = hostTokenPairName;
+        if ( isCredential ) {
+            this.emlauncherCredentialId = hostTokenPairNameOrCredentialId;
+        }
+        else {
+            this.hostTokenPairName = hostTokenPairNameOrCredentialId;
+        }
         this.filePath = filePath;
         this.dsymPath = dsymPath;
     }
 
+    public String getEmlauncherCredentialId() {
+        return emlauncherCredentialId;
+    }
+    @Deprecated
     public String getHostTokenPairName() {
         return hostTokenPairName;
     }
 
+    public void setEmlauncherCredentialId(String emlauncherCredentialId) {
+        this.emlauncherCredentialId = emlauncherCredentialId;
+    }
+    @Deprecated
     public void setHostTokenPairName(String hostTokenPairName) {
         this.hostTokenPairName = hostTokenPairName;
     }
