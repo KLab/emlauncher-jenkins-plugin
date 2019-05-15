@@ -23,7 +23,6 @@
  */
 package emlauncher;
 
-import com.cloudbees.plugins.credentials.CredentialsDescriptor;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
@@ -117,7 +116,7 @@ public class EMLauncherCredentialsImpl extends BaseStandardCredentials implement
      * {@inheritDoc}
      */
     @Extension
-    public static class DescriptorImpl extends CredentialsDescriptor {
+    public static class DescriptorImpl extends BaseStandardCredentialsDescriptor {
 
         /**
          * {@inheritDoc}
