@@ -24,23 +24,25 @@
         ]]>
 
   <j:set var="UUID" value="${descriptor.UUID}" />
-  <f:entry title="${%Host Token Pair}" field="hostTokenPairId">
-  	<j:if test="${instance.hostTokenPairName!=null}">
+  <f:entry>
+    <j:if test="${instance.hostTokenPairName!=null}">
       <div class="alert alert-warning">
         ${%The 'Configure System' EMLauncher host token pair information is used but this is a deprecated method.}
         ${%From now on, please move EMLauncher host token pair information to 'Credentials' instead of 'Configure System' and use it.}
       </div>
     </j:if>
     <j:invokeStatic var="emlauncherCledentials" className="emlauncher.EMLauncherCredentialsImpl" method="getAllCredentials"/>
-    <select class="setting-input" name="emlauncherCredentialId" id="hosttokenpair-select-${UUID}" onchange="showOrHideAttributeInput('hosttokenpair-select-', '${UUID}')" description="${%Select EMLauncher token pair. These are configured at credential.}">
-      <f:option selected="${instance.emlauncherCredentialId==null}" value="">${%none} (${%specify one below})</f:option>
-      <j:forEach var="emlauncherCredential" items="${emlauncherCledentials}">
-        <j:if test="${emlauncherCredential.getId()==instance.emlauncherCredentialId}">
-          <j:set var="displayHostTokenPair" value="none" scope="parent" />
-        </j:if>
-        <f:option selected="${emlauncherCredential.getId()==instance.emlauncherCredentialId}" value="${emlauncherCredential.getId()}">${emlauncherCredential.getDescription()}</f:option>
-      </j:forEach>
-    </select>
+    <f:entry title="${%Host Token Pair}" field="hostTokenPairId">
+      <select class="setting-input" name="emlauncherCredentialId" id="hosttokenpair-select-${UUID}" onchange="showOrHideAttributeInput('hosttokenpair-select-', '${UUID}')" description="${%Select EMLauncher token pair. These are configured at credential.}">
+        <f:option selected="${instance.emlauncherCredentialId==null}" value="">${%none} (${%specify one below})</f:option>
+        <j:forEach var="emlauncherCredential" items="${emlauncherCledentials}">
+          <j:if test="${emlauncherCredential.getId()==instance.emlauncherCredentialId}">
+            <j:set var="displayHostTokenPair" value="none" scope="parent" />
+          </j:if>
+          <f:option selected="${emlauncherCredential.getId()==instance.emlauncherCredentialId}" value="${emlauncherCredential.getId()}">${emlauncherCredential.getDescription()}</f:option>
+        </j:forEach>
+      </select>
+    </f:entry>
     <f:nested>
       <j:if test="${displayHostTokenPair==null}">
         <j:set var="displayHostTokenPair" value="block" />

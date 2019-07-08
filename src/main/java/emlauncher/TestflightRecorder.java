@@ -61,6 +61,7 @@ public class TestflightRecorder extends Recorder implements SimpleBuildStep {
     public void setEmlauncherCredentialId(String emlauncherCredentialId) {
         this.emlauncherCredentialId = emlauncherCredentialId;
     }
+
     @Deprecated
     @DataBoundSetter
     public void setHostTokenPairName(String hostTokenPairName) {
@@ -261,8 +262,9 @@ public class TestflightRecorder extends Recorder implements SimpleBuildStep {
     }
     
     @Deprecated
-    public TestflightRecorder(String emlauncherCredentialId, String apiHost, Secret apiToken, boolean sslEnable, Boolean notifyTeam, String title, String description, String tags, Boolean appendChangelog, String filePath, String dsymPath, String proxyHost, String proxyUser, String proxyPass, int proxyPort, int timeout, Boolean debug, TestflightTeam [] additionalTeams) {
-	this(emlauncherCredentialId);
+    public TestflightRecorder(String hostTokenPairName, String apiHost, Secret apiToken, boolean sslEnable, Boolean notifyTeam, String title, String description, String tags, Boolean appendChangelog, String filePath, String dsymPath, String proxyHost, String proxyUser, String proxyPass, int proxyPort, int timeout, Boolean debug, TestflightTeam [] additionalTeams) {
+	this(null);
+	this.hostTokenPairName = hostTokenPairName;
     }
 
     @Override
