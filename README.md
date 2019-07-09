@@ -20,6 +20,8 @@ And In your Build configuration, Add EMLauncher Plugin to post build process and
 - Added macro expansion by "TokenMacro" to description sent to EMlauncher.
  Like:
     ${ENV ,var="description"}
+- Move EMLauncher host's authentication information (host name and API key) from global settings to credentials.
+- Added compatibility with Credentials Binding Plugin.
 
 ## Example Pipeline script
 ```
@@ -39,3 +41,11 @@ stage('upload') {
     )
 }
 ```
+
+## How to use 'Credentials Binding Plugin'
+- Enable 'Use secret text(s) or file(s)'.
+- Added 'EM launcher Host Token Pair' to 'Bindings'.
+- Specifies the name of the environment variable that stores the information stored in 'Credentials'.
+
+ Then, you can use the value of the environment variable specified here by a shell script etc. after that.
+
