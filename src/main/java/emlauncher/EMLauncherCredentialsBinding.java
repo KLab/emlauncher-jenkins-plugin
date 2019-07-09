@@ -119,7 +119,7 @@ public class EMLauncherCredentialsBinding extends MultiBinding<EMLauncherCredent
         }
 
         @Override public String getDisplayName() {
-            return "EMLauncher Hostname and API Token pair";
+            return Messages.EMLauncherCredentials_DisplayName();
         }
     }
 
