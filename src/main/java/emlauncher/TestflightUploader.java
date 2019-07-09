@@ -8,7 +8,9 @@ import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.conn.params.ConnRoutePNames;
-import org.apache.http.entity.mime.MultipartEntity;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.mime.HttpMultipartMode;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -135,28 +137,30 @@ public class TestflightUploader implements Serializable {
         HttpPost httpPost = new HttpPost("/api/upload");
         FileBody fileBody = new FileBody(ur.file);
 
-        MultipartEntity entity = new MultipartEntity();
-        entity.addPart("api_key", new StringBody(ur.apiToken));
-        entity.addPart("title", new StringBody(ur.title));
+        MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+        builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
+        builder.addTextBody("api_key", ur.apiToken, ContentType.TEXT_PLAIN);
+        builder.addTextBody("title", ur.title, ContentType.TEXT_PLAIN);
         
-        if(ur.description != null){
-          entity.addPart("description", new StringBody(ur.description, "text/plain", Charset.forName("UTF-8")));
+        if ( ur.description != null ) {
+            builder.addTextBody("description", ur.description, ContentType.TEXT_PLAIN.withCharset("UTF-8"));
         }
         
-        if(ur.tags != null){
-          entity.addPart("tags", new StringBody(ur.tags));
+        if ( ur.tags != null ) {
+            builder.addTextBody("tags", ur.tags, ContentType.TEXT_PLAIN.withCharset("UTF-8"));
         }
-        
-        entity.addPart("file", fileBody);
 
-        if (ur.dsymFile != null) {
+        builder.addPart("file", fileBody);
+
+        if ( ur.dsymFile != null ) {
             FileBody dsymFileBody = new FileBody(ur.dsymFile);
-            entity.addPart("dsym", dsymFileBody);
+            builder.addPart("dsym", dsymFileBody);
         }
 
-        entity.addPart("notify", new StringBody(ur.notifyTeam ? "True" : "False"));
+        builder.addPart("notify", new StringBody(ur.notifyTeam ? "True" : "False"));
 
-        httpPost.setEntity(entity);
+        HttpEntity postEntity = builder.build();
+        httpPost.setEntity(postEntity);
 
         logDebug("POST Request: " + ur);
 

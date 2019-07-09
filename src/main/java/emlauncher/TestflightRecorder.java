@@ -435,6 +435,7 @@ public class TestflightRecorder extends Recorder implements SimpleBuildStep {
         ur.proxyUser = proxy.getUserName();
         ur.debug = debug;
         ur.timeout = getTimeout();
+	listener.getLogger().println("ur: " + ur.toString());
         return ur;
     }
 
