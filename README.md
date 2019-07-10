@@ -31,7 +31,7 @@ OUTPUT_FILE_NAME = "${BUILD_TARGET}.ipa"
 stage('upload') {
     // Upload IPA to a test site such as TestFlight.
     emlauncherUploader(
-        hostTokenPairName: 'Sandbox',
+        emlauncherCredentialId: 'Sandbox_Credential',
         filePath: "build/Release-iphoneos/AdHoc/${OUTPUT_FILE_NAME}",
         dsymPath: "build/Release-iphoneos/AdHoc/${BUILD_TARGET}-dSYM.zip",
         title: 'My test app',
@@ -42,10 +42,26 @@ stage('upload') {
 }
 ```
 
-## How to use 'Credentials Binding Plugin'
+## How to use 'Credentials Binding Plugin' at Web GUI
 - Enable 'Use secret text(s) or file(s)'.
 - Added 'EM launcher Host Token Pair' to 'Bindings'.
 - Specifies the name of the environment variable that stores the information stored in 'Credentials'.
 
  Then, you can use the value of the environment variable specified here by a shell script etc. after that.
 
+## How to use 'Credentials Binding' at Pipeline script
+
+```
+stage('use_credential') {
+    withCredentials([[$class: 'EMLauncherCredentialsBinding', credentialsId: 'Sandbox_Credential', apiHostVariable: 'EM_HOST', apiTokenVariable: 'EM_API_TOKEN', sslEnableVariable: 'EM_SSL_ENABLE']]) {
+    sh '''#!/bin/bash
+        # EMlauncherのパッケージ一覧を取得
+        if [ "${EM_SSL_ENABLE}" = "true" ]; then
+          scheme="https"
+        else
+          scheme="http"
+        fi
+        curl ${scheme}://${EM_HOST}/api/package_list?api_key={${EM_API_TOKEN}}
+    '''
+}
+```
