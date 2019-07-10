@@ -1,5 +1,7 @@
 package emlauncher;
 
+import com.cloudbees.plugins.credentials.CredentialsMatchers;
+import com.cloudbees.plugins.credentials.CredentialsProvider;
 import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.Extension;
@@ -11,6 +13,7 @@ import hudson.model.AbstractBuild;
 import hudson.model.TaskListener;
 import hudson.scm.ChangeLogSet;
 import hudson.scm.ChangeLogSet.Entry;
+import hudson.security.ACL;
 import hudson.tasks.*;
 import hudson.util.CopyOnWriteList;
 import hudson.util.RunList;
@@ -42,12 +45,24 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 public class TestflightRecorder extends Recorder implements SimpleBuildStep {
+    private String emlauncherCredentialId = null;
+    @Deprecated
     private String hostTokenPairName = null;
 
+    public String getEmlauncherCredentialId() {
+        return this.emlauncherCredentialId;
+    }
+    @Deprecated
     public String getHostTokenPairName() {
         return this.hostTokenPairName;
     }
 
+    @DataBoundSetter
+    public void setEmlauncherCredentialId(String emlauncherCredentialId) {
+        this.emlauncherCredentialId = emlauncherCredentialId;
+    }
+
+    @Deprecated
     @DataBoundSetter
     public void setHostTokenPairName(String hostTokenPairName) {
 	this.hostTokenPairName = hostTokenPairName;
@@ -242,13 +257,14 @@ public class TestflightRecorder extends Recorder implements SimpleBuildStep {
     }
 
     @DataBoundConstructor
-    public TestflightRecorder(String hostTokenPairName) {
-        this.hostTokenPairName = hostTokenPairName;
+    public TestflightRecorder(String emlauncherCredentialId) {
+        this.emlauncherCredentialId = emlauncherCredentialId;
     }
     
     @Deprecated
     public TestflightRecorder(String hostTokenPairName, String apiHost, Secret apiToken, boolean sslEnable, Boolean notifyTeam, String title, String description, String tags, Boolean appendChangelog, String filePath, String dsymPath, String proxyHost, String proxyUser, String proxyPass, int proxyPort, int timeout, Boolean debug, TestflightTeam [] additionalTeams) {
-	this(hostTokenPairName);
+	this(null);
+	this.hostTokenPairName = hostTokenPairName;
     }
 
     @Override
@@ -318,7 +334,13 @@ public class TestflightRecorder extends Recorder implements SimpleBuildStep {
     private List<TestflightTeam> createDefaultPlusAdditionalTeams() {
         List<TestflightTeam> allTeams = new ArrayList<TestflightTeam>();
         // first team is default
-        allTeams.add(new TestflightTeam(getHostTokenPairName(), getFilePath(), getDsymPath()));
+        if ( StringUtils.isNotEmpty(getHostTokenPairName()) ) {
+            // for backward compatibility
+            allTeams.add(new TestflightTeam(getHostTokenPairName(), getFilePath(), getDsymPath(), false));
+        }
+        else {
+            allTeams.add(new TestflightTeam(getEmlauncherCredentialId(), getFilePath(), getDsymPath(), true));
+        }
         if(additionalTeams != null) {
             allTeams.addAll(Arrays.asList(additionalTeams));
         }
@@ -354,12 +376,32 @@ public class TestflightRecorder extends Recorder implements SimpleBuildStep {
 
     private TestflightUploader.UploadRequest createPartialUploadRequest(TestflightTeam team, EnvVars vars, Run<?, ?> build, final TaskListener listener) {
         TestflightUploader.UploadRequest ur = new TestflightUploader.UploadRequest();
-        HostTokenPair hostTokenPair = getHostTokenPair(team.getHostTokenPairName());
+        if ( StringUtils.isNotEmpty(team.getHostTokenPairName()) ) {
+            // for backward compatibility
+            HostTokenPair hostTokenPair = getHostTokenPair(team.getHostTokenPairName());
+            if ( hostTokenPair == null ) {
+                throw new MisconfiguredJobException(Messages._TestflightRecorder_HostTokenPairNotFound(team.getHostTokenPairName()));
+            }
+            ur.apiHost = vars.expand(hostTokenPair.getApiHost());
+            ur.apiToken = vars.expand(Secret.toString(hostTokenPair.getApiToken()));
+            ur.sslEnable = hostTokenPair.getSslEnable();
+        }
+        else if ( StringUtils.isNotEmpty(team.getEmlauncherCredentialId()) ) {
+            EMLauncherCredentials credential = getEmlauncherCredential(build.getParent(), team.getEmlauncherCredentialId());
+            if ( credential == null ) {
+                throw new MisconfiguredJobException(Messages._TestflightRecorder_HostTokenPairNotFound(team.getEmlauncherCredentialId()));
+            }
+            ur.apiHost = vars.expand(credential.getApiHost());
+            ur.apiToken = vars.expand(credential.getApiToken().getPlainText());
+            ur.sslEnable = credential.getSslEnable();
+        }
+        else {
+            ur.apiHost = vars.expand(this.apiHost);
+            ur.apiToken = vars.expand(Secret.toString(this.apiToken));
+            ur.sslEnable = this.sslEnable;
+        }
         ur.filePaths = vars.expand(StringUtils.trim(team.getFilePath()));
         ur.dsymPath = vars.expand(StringUtils.trim(team.getDsymPath()));
-        ur.apiHost = vars.expand(hostTokenPair.getApiHost());
-        ur.apiToken = vars.expand(Secret.toString(hostTokenPair.getApiToken()));
-        ur.sslEnable = hostTokenPair.getSslEnable();
         ur.title = vars.expand(title);
 	// Add SCM change log to description. (if needed)
 	List<ChangeLogSet> changeSets = new ArrayList<ChangeLogSet>();
@@ -393,6 +435,7 @@ public class TestflightRecorder extends Recorder implements SimpleBuildStep {
         ur.proxyUser = proxy.getUserName();
         ur.debug = debug;
         ur.timeout = getTimeout();
+	listener.getLogger().println("ur: " + ur.toString());
         return ur;
     }
 
@@ -480,17 +523,20 @@ public class TestflightRecorder extends Recorder implements SimpleBuildStep {
     }
 */
 
+    @Deprecated
     private HostTokenPair getHostTokenPair(String hostTokenPairName) {
         for (HostTokenPair hostTokenPair : getDescriptor().getHostTokenPairs()) {
             if (hostTokenPair.getHostTokenPairName().equals(hostTokenPairName))
                 return hostTokenPair;
         }
+        return null;
+    }
 
-        if (getApiToken() != null && getApiHost() != null)
-            return new HostTokenPair("", getApiHost(), getApiToken(), getSslEnable());
-
-        String hostTokenPairNameForMessage = hostTokenPairName != null ? hostTokenPairName : "(null)";
-        throw new MisconfiguredJobException(Messages._TestflightRecorder_HostTokenPairNotFound(hostTokenPairNameForMessage));
+    private EMLauncherCredentials getEmlauncherCredential(Item context, String emlauncherCerdentialId) {
+        return (EMLauncherCredentials) CredentialsMatchers.firstOrNull(
+                CredentialsProvider.lookupCredentials(EMLauncherCredentials.class, context,
+                        ACL.SYSTEM, Collections.EMPTY_LIST),
+                CredentialsMatchers.withId(emlauncherCerdentialId));
     }
 
     @Extension // This indicates to Jenkins that this is an implementation of an extension point.

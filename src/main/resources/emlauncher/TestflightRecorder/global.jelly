@@ -3,6 +3,12 @@
   <!-- nothing to configure -->
   <f:section title="${%EMLauncher}">
     <f:entry title="${%EMLauncher Tokens}" description="${%Host and Token configurations for uploading to EMLauncher}">
+      <j:if test="${descriptor.hostTokenPairs.size()>0}">
+        <div class="alert alert-warning">
+          ${%Although there is EMLauncher host token pair information in 'Configure System', this is a deprecated method.}
+          ${%From now on, please move EMLauncher host token pair information to 'Credentials' instead of 'Configure System' and use it.}
+        </div>
+      </j:if>
       <f:repeatable var="hostTokenPair" items="${descriptor.hostTokenPairs}">
         <table width="100%">
           <f:entry title="${%Host Token Pair Name}" field="hostTokenPairName">
